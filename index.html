@@ -62,7 +62,7 @@
     <div class="max-w-4xl mx-auto flex justify-around text-center">
       <button onclick="gantiTab('input')" id="nav-input" class="py-2.5 px-3 flex-1 text-emerald-700 font-bold text-xs flex flex-col items-center gap-1 border-t-2 border-emerald-600">
         <i class="fa-solid fa-pen-to-square text-base"></i>
-        <span>Setoran</span>
+        <span>Dashboard</span>
       </button>
       <button onclick="gantiTab('kitab')" id="nav-kitab" class="py-2.5 px-3 flex-1 text-slate-500 font-semibold text-xs flex flex-col items-center gap-1 border-t-2 border-transparent">
         <i class="fa-solid fa-book-bookmark text-base"></i>
@@ -90,8 +90,15 @@
   <!-- MAIN CONTAINER -->
   <main class="max-w-4xl mx-auto p-3 sm:p-4 space-y-4">
 
-    <!-- TAB 1: SETORAN & PRESENSI HARIAN -->
+    <!-- TAB 1: DASHBOARD (ABSENSI & SETORAN HARIAN) -->
     <section id="tab-sec-input" class="space-y-3">
+      <!-- SWITCH KELOMPOK -->
+      <div class="bg-white p-2 rounded-xl shadow-sm border border-slate-200 flex gap-2 no-print">
+        <button onclick="setDashboardMode('BANIN')" id="mode-banin" class="flex-1 py-2 rounded-lg font-bold text-xs">Banin</button>
+        <button onclick="setDashboardMode('BANAT')" id="mode-banat" class="flex-1 py-2 rounded-lg font-bold text-xs">Banat</button>
+        <button onclick="setDashboardMode('PRIVAT')" id="mode-privat" class="flex-1 py-2 rounded-lg font-bold text-xs">Privat</button>
+      </div>
+
       <!-- STATS DASHBOARD -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 no-print">
         <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex items-center gap-2.5">
@@ -116,18 +123,49 @@
       <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200 flex flex-wrap gap-2 items-center justify-between no-print text-xs">
         <div class="flex items-center gap-2 w-full sm:w-auto">
           <span class="font-bold text-slate-600">Tanggal:</span>
-          <input type="date" id="tgl-setoran" onchange="renderSetoranList()" class="border rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+          <input type="date" id="tgl-setoran" onchange="renderDashboard()" class="border rounded-lg px-2.5 py-1.5 font-semibold text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
         </div>
         <div class="flex items-center gap-2 w-full sm:w-auto flex-1 max-w-md">
-          <input type="text" id="cari-santri-input" onkeyup="renderSetoranList()" placeholder="Cari nama santri..." class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
+          <input type="text" id="cari-santri-input" onkeyup="renderDashboard()" placeholder="Cari nama santri..." class="w-full border rounded-lg px-3 py-1.5 text-xs outline-none focus:ring-2 focus:ring-emerald-500 bg-slate-50">
         </div>
-        <button onclick="pengumumanLiburMendadak()" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1 shadow animate-pulse">
-          <i class="fa-solid fa-bullhorn"></i> Libur Mendadak
+      </div>
+
+      <!-- TOMBOL KIRIM WA (kontekstual sesuai mode) -->
+      <div class="flex gap-2 no-print">
+        <button onclick="pengumumanLiburMendadak()" class="flex-1 bg-rose-500 hover:bg-rose-600 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow">
+          <i class="fa-solid fa-bullhorn"></i> Kirim Libur
+        </button>
+        <button onclick="kirimMasukBelajarSekarang()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 shadow">
+          <i class="fa-brands fa-whatsapp"></i> Kirim Masuk Belajar
         </button>
       </div>
 
-      <!-- CONTAINER LIST SETORAN SANTRI -->
-      <div id="container-setoran-list" class="space-y-3"></div>
+      <!-- LANGKAH 1: ABSENSI (mode Banin/Banat) -->
+      <div id="dash-step-absensi" class="space-y-3">
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-2.5 rounded-lg">
+          Tap <strong>Hadir/Izin/Sakit</strong> sesuai keterangan. Santri yang tidak ditandai otomatis jadi <strong>Alpa</strong>.
+        </div>
+        <div id="container-absensi-list" class="space-y-2"></div>
+        <button onclick="simpanAbsensiMassal()" class="w-full bg-emerald-700 hover:bg-emerald-800 text-white py-2.5 rounded-lg font-bold text-sm flex items-center justify-center gap-2 shadow">
+          <i class="fa-solid fa-check"></i> Selesai Absen, Lanjut Setoran
+        </button>
+      </div>
+
+      <!-- LANGKAH 2: SETORAN (mode Banin/Banat) -->
+      <div id="dash-step-setoran" class="hidden space-y-3">
+        <button onclick="stepDashboard='ABSENSI'; renderDashboard();" class="text-xs font-bold text-emerald-700 flex items-center gap-1 no-print">
+          <i class="fa-solid fa-arrow-left"></i> Ubah Absensi
+        </button>
+        <div id="container-setoran-list" class="space-y-3"></div>
+      </div>
+
+      <!-- MODE PRIVAT: absen + setoran jadi satu, plus kirim manual per-anak -->
+      <div id="dash-privat-wrap" class="hidden space-y-3">
+        <div class="bg-amber-50 border border-amber-200 text-amber-800 text-xs p-2.5 rounded-lg">
+          Centang santri yang mau dikirimi pesan manual, lalu pakai tombol "Kirim Libur"/"Kirim Masuk Belajar" di atas.
+        </div>
+        <div id="container-privat-list" class="space-y-3"></div>
+      </div>
     </section>
 
     <!-- TAB 2: MANAJEMEN KITAB MANUAL -->
@@ -266,6 +304,9 @@
           <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center gap-2"><i class="fa-solid fa-clock text-emerald-600"></i> Jam Pengingat Dikirim</h3>
           <p class="text-[11px] text-slate-400 mb-2">Sistem cek tiap 15 menit, jadi pesan terkirim maksimal 15 menit setelah jam ini.</p>
           <input type="time" id="input-jam-pengingat" class="border rounded-lg px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-emerald-400">
+          <button onclick="kirimMasukBelajarSekarang()" class="mt-2 w-full bg-emerald-100 hover:bg-emerald-200 text-emerald-800 py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2">
+            <i class="fa-brands fa-whatsapp"></i> Kirim Sekarang (manual, tanpa nunggu jadwal)
+          </button>
         </div>
         <div class="border-t pt-4">
           <h3 class="font-bold text-sm text-slate-700 mb-1 flex items-center gap-2"><i class="fa-solid fa-bullhorn text-rose-500"></i> Teks Libur Mendadak</h3>
@@ -587,7 +628,9 @@ _Jazakumullah Khairan Katsiran._ 🙏
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('tgl-setoran').value = getTodayYMD();
       updateHariBadge();
-      renderSetoranList();
+      const dayNum = new Date().getDay();
+      const modeAwal = [1, 3, 5].includes(dayNum) ? 'BANAT' : (dayNum === 0 ? 'BANIN' : 'BANIN');
+      setDashboardMode(modeAwal);
       renderKitabGrid();
       renderSantriTable();
       renderSPPMatrix();
@@ -634,117 +677,239 @@ _Jazakumullah Khairan Katsiran._ 🙏
       if(tab==='pengaturan') muatPengaturan();
     }
 
-    // TAB 1: RENDER LIST SETORAN
-    function renderSetoranList() {
-      const container = document.getElementById('container-setoran-list');
+    // ===== DASHBOARD: STATE & SWITCH MODE =====
+    let modeDashboard = 'BANIN';
+    let stepDashboard = 'ABSENSI';
+
+    function setDashboardMode(mode) {
+      modeDashboard = mode;
+      stepDashboard = 'ABSENSI';
+      ['banin', 'banat', 'privat'].forEach(m => {
+        const btn = document.getElementById(`mode-${m}`);
+        btn.className = (m === mode.toLowerCase())
+          ? 'flex-1 py-2 rounded-lg font-bold text-xs bg-emerald-600 text-white shadow'
+          : 'flex-1 py-2 rounded-lg font-bold text-xs bg-slate-100 text-slate-500';
+      });
+      renderDashboard();
+    }
+
+    function renderDashboard() {
+      const isPrivat = modeDashboard === 'PRIVAT';
+      document.getElementById('dash-privat-wrap').classList.toggle('hidden', !isPrivat);
+      document.getElementById('dash-step-absensi').classList.toggle('hidden', isPrivat || stepDashboard !== 'ABSENSI');
+      document.getElementById('dash-step-setoran').classList.toggle('hidden', isPrivat || stepDashboard !== 'SETORAN');
+
       const tgl = document.getElementById('tgl-setoran').value;
-      const kw = document.getElementById('cari-santri-input').value.toLowerCase();
-      const dayNum = new Date(tgl).getDay(); // 1:Sen, 2:Sel, 3:Rab, 4:Kam, 5:Jum, 6:Sab
-
-      container.innerHTML = '';
-
-      let filtered = listSantri.filter(s => s.nama.toLowerCase().includes(kw));
-
-      if(filterHariAktif === 'AUTO') {
-        if([1, 3, 5].includes(dayNum)) filtered = filtered.filter(s => s.kelompok === 'BANAT');
-        else if([2, 4, 6].includes(dayNum)) filtered = filtered.filter(s => s.kelompok === 'BANIN');
-      } else if(filterHariAktif === 'BANAT') {
-        filtered = filtered.filter(s => s.kelompok === 'BANAT');
-      } else if(filterHariAktif === 'BANIN') {
-        filtered = filtered.filter(s => s.kelompok === 'BANIN');
-      }
-
-      // Update Dashboard Stats
       const logHariIni = listLog.filter(l => l.tanggal === tgl);
       document.getElementById('st-hadir').innerText = logHariIni.filter(l => l.absensi === 'HADIR').length;
       document.getElementById('st-fathur').innerText = logHariIni.filter(l => l.program === 'Fathurrahman').length;
-      document.getElementById('st-quran').innerText = logHariIni.filter(l => l.program === 'Al-Qur\'an').length;
+      document.getElementById('st-quran').innerText = logHariIni.filter(l => l.program === "Al-Qur'an").length;
       document.getElementById('st-hafalan').innerText = logHariIni.filter(l => l.program === 'Hafalan').length;
 
-      if(filtered.length === 0) {
-        container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-slate-400 text-xs">Tidak ada data santri untuk filter ini.</div>`;
+      if (isPrivat) renderPrivatList();
+      else if (stepDashboard === 'ABSENSI') renderAbsensiStep();
+      else renderSetoranStep();
+    }
+
+    function getSantriFilterKelompok() {
+      const kw = document.getElementById('cari-santri-input').value.toLowerCase();
+      return listSantri.filter(s => s.kelompok === modeDashboard && s.nama.toLowerCase().includes(kw));
+    }
+
+    // ===== LANGKAH 1: ABSENSI =====
+    function renderAbsensiStep() {
+      const tgl = document.getElementById('tgl-setoran').value;
+      const filtered = getSantriFilterKelompok();
+      const container = document.getElementById('container-absensi-list');
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-slate-400 text-xs">Tidak ada santri di kelompok ini.</div>`;
         return;
       }
 
       filtered.forEach(s => {
-        const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl) || {};
-        const abs = log.absensi || 'HADIR';
-        const prog = log.program || s.program || 'Fathurrahman';
+        const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl);
+        const abs = log ? log.absensi : null;
+        container.innerHTML += `
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 flex flex-wrap justify-between items-center gap-2">
+            <div>
+              <p class="font-bold text-slate-800 text-sm">${s.nama}</p>
+              <p class="text-[10px] text-slate-400">${abs ? 'Status: ' + abs : 'Belum ditandai (akan jadi ALPA)'}</p>
+            </div>
+            <div class="flex gap-1 text-[10px] font-bold">
+              ${['HADIR', 'IZIN', 'SAKIT'].map(st => `
+                <button type="button" onclick="quickAbsen('${s.id}', '${st}')" class="px-2.5 py-1.5 rounded border ${abs===st?getAbsenColor(st):'bg-slate-50 text-slate-400'}">${st}</button>
+              `).join('')}
+            </div>
+          </div>`;
+      });
+    }
 
-        let formHtml = '';
+    function simpanAbsensiMassal() {
+      const tgl = document.getElementById('tgl-setoran').value;
+      const filtered = getSantriFilterKelompok();
 
-        if(prog === 'Fathurrahman') {
-          formHtml = `
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Hal/Jilid</label>
-                <input type="text" id="hal-${s.id}" value="${log.halaman || ''}" placeholder="Misal: Hal. 12" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Kelancaran</label>
-                <select id="lancar-${s.id}" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-                  <option value="Sangat Lancar" ${log.kelancaran==='Sangat Lancar'?'selected':''}>Sangat Lancar</option>
-                  <option value="Lancar" ${log.kelancaran==='Lancar'||!log.kelancaran?'selected':''}>Lancar</option>
-                  <option value="Perlu Mengulang" ${log.kelancaran==='Perlu Mengulang'?'selected':''}>Perlu Mengulang</option>
-                </select>
-              </div>
-            </div>`;
-        } else if(prog === 'Al-Qur\'an') {
-          formHtml = `
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Surah & Ayat</label>
-                <input type="text" id="surah-${s.id}" value="${log.surah || ''}" placeholder="Al-Baqarah: 1-15" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Catatan Tajwid</label>
-                <input type="text" id="tajwid-${s.id}" value="${log.catatanTajwid || ''}" placeholder="Dengung / Mad" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-              </div>
-            </div>`;
-        } else {
-          formHtml = `
-            <div class="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Ziyadah (Baru)</label>
-                <input type="text" id="ziyadah-${s.id}" value="${log.ziyadah || ''}" placeholder="An-Naba': 1-10" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-              </div>
-              <div>
-                <label class="text-[10px] font-bold text-slate-500">Murojaah (Lama)</label>
-                <input type="text" id="murojaah-${s.id}" value="${log.murojaah || ''}" placeholder="An-Nas s/d Al-A'la" class="w-full border rounded p-1.5 outline-none bg-slate-50">
-              </div>
-            </div>`;
+      filtered.forEach(s => {
+        const idx = listLog.findIndex(l => l.santriId === s.id && l.tanggal === tgl);
+        if (idx === -1) {
+          listLog.push({ id: 'l-' + Date.now() + '-' + s.id, santriId: s.id, tanggal: tgl, absensi: 'ALPA' });
         }
+      });
+      simpanKeStorage();
+
+      const logs = filtered.map(s => listLog.find(l => l.santriId === s.id && l.tanggal === tgl));
+      const hadir = logs.filter(l => l && l.absensi === 'HADIR').length;
+      const izin = logs.filter(l => l && l.absensi === 'IZIN').length;
+      const sakit = logs.filter(l => l && l.absensi === 'SAKIT').length;
+      const alpa = logs.filter(l => l && l.absensi === 'ALPA').length;
+
+      if (confirm(`Absen selesai: ${hadir} Hadir, ${izin} Izin, ${sakit} Sakit, ${alpa} Alpa.\nLanjut ke Setoran?`)) {
+        stepDashboard = 'SETORAN';
+        renderDashboard();
+      } else {
+        renderAbsensiStep();
+      }
+    }
+
+    // ===== LANGKAH 2: SETORAN (hanya yang HADIR) =====
+    function renderSetoranStep() {
+      const tgl = document.getElementById('tgl-setoran').value;
+      const container = document.getElementById('container-setoran-list');
+      container.innerHTML = '';
+
+      const filtered = getSantriFilterKelompok().filter(s => {
+        const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl);
+        return log && log.absensi === 'HADIR';
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-slate-400 text-xs">Tidak ada santri Hadir tercatat pada tanggal ini.</div>`;
+        return;
+      }
+
+      filtered.forEach(s => { container.innerHTML += buildSetoranCardHtml(s, tgl); });
+    }
+
+    // ===== MODE PRIVAT: absen + setoran + kirim manual jadi satu =====
+    function renderPrivatList() {
+      const tgl = document.getElementById('tgl-setoran').value;
+      const dayNum = new Date(tgl).getDay();
+      const container = document.getElementById('container-privat-list');
+      container.innerHTML = '';
+
+      const kw = document.getElementById('cari-santri-input').value.toLowerCase();
+      const filtered = listSantri.filter(s => s.kelompok === 'PRIVAT' && s.nama.toLowerCase().includes(kw));
+
+      if (filtered.length === 0) {
+        container.innerHTML = `<div class="bg-white p-6 rounded-xl text-center text-slate-400 text-xs">Belum ada santri Privat. Tambahkan lewat tab Santri.</div>`;
+        return;
+      }
+
+      filtered.forEach(s => {
+        const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl);
+        const abs = log ? log.absensi : null;
+        const jadwalHariIni = (s.privatHari || []).includes(dayNum);
 
         container.innerHTML += `
           <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 space-y-3">
             <div class="flex flex-wrap justify-between items-center gap-2 border-b pb-2">
-              <div>
-                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
-                  <i class="fa-solid fa-user-graduate text-emerald-600"></i> ${s.nama}
-                  <span class="text-[9px] px-2 py-0.5 rounded-full font-bold ${s.kelompok==='BANAT'?'bg-pink-100 text-pink-700':'bg-blue-100 text-blue-700'}">${s.kelompok}</span>
-                </h3>
-                <p class="text-[10px] text-slate-400 font-medium">Program: ${prog} (${s.kitabSpesifik || '-'})</p>
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="chk-privat-${s.id}" class="w-4 h-4">
+                <div>
+                  <h3 class="font-bold text-slate-800 text-sm">${s.nama} ${jadwalHariIni ? '<span class=\"text-[9px] bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full font-bold\">Jadwal Hari Ini</span>' : ''}</h3>
+                  <p class="text-[10px] text-slate-400">${s.program}</p>
+                </div>
               </div>
               <div class="flex gap-1 text-[10px] font-bold">
-                ${['HADIR', 'IZIN', 'SAKIT', 'ALPA'].map(st => `
+                ${['HADIR', 'IZIN', 'SAKIT'].map(st => `
                   <button type="button" onclick="quickAbsen('${s.id}', '${st}')" class="px-2 py-1 rounded border ${abs===st?getAbsenColor(st):'bg-slate-50 text-slate-400'}">${st}</button>
                 `).join('')}
               </div>
             </div>
-
-            ${formHtml}
-
+            ${buildSetoranFormHtml(s, tgl)}
             <div class="flex items-center gap-2 pt-1">
-              <input type="text" id="cat-${s.id}" value="${log.catatan || ''}" placeholder="Catatan Ustaz/Ustazah..." class="flex-1 border rounded-lg p-1.5 text-xs outline-none bg-slate-50">
+              <input type="text" id="cat-${s.id}" value="${(log&&log.catatan)||''}" placeholder="Catatan Ustaz/Ustazah..." class="flex-1 border rounded-lg p-1.5 text-xs outline-none bg-slate-50">
               <button onclick="simpanSetoran('${s.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1">
                 <i class="fa-solid fa-floppy-disk"></i> Simpan
-              </button>
-              <button onclick="kirimWA('${s.id}')" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow">
-                <i class="fa-brands fa-whatsapp text-sm"></i>
               </button>
             </div>
           </div>`;
       });
+    }
+
+    // Helper: bagian form input setoran sesuai program (dipakai ulang di beberapa tempat)
+    function buildSetoranFormHtml(s, tgl) {
+      const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl) || {};
+      const prog = log.program || s.program || 'Fathurrahman';
+
+      if (prog === 'Fathurrahman') {
+        return `
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Hal/Jilid</label>
+              <input type="text" id="hal-${s.id}" value="${log.halaman || ''}" placeholder="Misal: Hal. 12" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Kelancaran</label>
+              <select id="lancar-${s.id}" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+                <option value="Sangat Lancar" ${log.kelancaran==='Sangat Lancar'?'selected':''}>Sangat Lancar</option>
+                <option value="Lancar" ${log.kelancaran==='Lancar'||!log.kelancaran?'selected':''}>Lancar</option>
+                <option value="Perlu Mengulang" ${log.kelancaran==='Perlu Mengulang'?'selected':''}>Perlu Mengulang</option>
+              </select>
+            </div>
+          </div>`;
+      } else if (prog === "Al-Qur'an") {
+        return `
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Surah & Ayat</label>
+              <input type="text" id="surah-${s.id}" value="${log.surah || ''}" placeholder="Al-Baqarah: 1-15" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+            </div>
+            <div>
+              <label class="text-[10px] font-bold text-slate-500">Catatan Tajwid</label>
+              <input type="text" id="tajwid-${s.id}" value="${log.catatanTajwid || ''}" placeholder="Dengung / Mad" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+            </div>
+          </div>`;
+      }
+      return `
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div>
+            <label class="text-[10px] font-bold text-slate-500">Ziyadah (Baru)</label>
+            <input type="text" id="ziyadah-${s.id}" value="${log.ziyadah || ''}" placeholder="An-Naba': 1-10" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+          </div>
+          <div>
+            <label class="text-[10px] font-bold text-slate-500">Murojaah (Lama)</label>
+            <input type="text" id="murojaah-${s.id}" value="${log.murojaah || ''}" placeholder="An-Nas s/d Al-A'la" class="w-full border rounded p-1.5 outline-none bg-slate-50">
+          </div>
+        </div>`;
+    }
+
+    // Helper: kartu setoran lengkap (dipakai di Langkah 2 mode Banin/Banat)
+    function buildSetoranCardHtml(s, tgl) {
+      const log = listLog.find(l => l.santriId === s.id && l.tanggal === tgl) || {};
+      const prog = log.program || s.program || 'Fathurrahman';
+
+      return `
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3.5 space-y-3">
+          <div class="border-b pb-2">
+            <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5">
+              <i class="fa-solid fa-user-graduate text-emerald-600"></i> ${s.nama}
+              <span class="text-[9px] px-2 py-0.5 rounded-full font-bold ${s.kelompok==='BANAT'?'bg-pink-100 text-pink-700':'bg-blue-100 text-blue-700'}">${s.kelompok}</span>
+            </h3>
+            <p class="text-[10px] text-slate-400 font-medium">Program: ${prog} (${s.kitabSpesifik || '-'})</p>
+          </div>
+          ${buildSetoranFormHtml(s, tgl)}
+          <div class="flex items-center gap-2 pt-1">
+            <input type="text" id="cat-${s.id}" value="${log.catatan || ''}" placeholder="Catatan Ustaz/Ustazah..." class="flex-1 border rounded-lg p-1.5 text-xs outline-none bg-slate-50">
+            <button onclick="simpanSetoran('${s.id}')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow flex items-center gap-1">
+              <i class="fa-solid fa-floppy-disk"></i> Simpan
+            </button>
+            <button onclick="kirimWA('${s.id}')" class="bg-emerald-100 text-emerald-800 hover:bg-emerald-200 px-2.5 py-1.5 rounded-lg text-xs font-bold shadow">
+              <i class="fa-brands fa-whatsapp text-sm"></i>
+            </button>
+          </div>
+        </div>`;
     }
 
     function getAbsenColor(st) {
@@ -760,7 +925,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
       if(idx > -1) listLog[idx].absensi = status;
       else listLog.push({ id: 'l-' + Date.now(), santriId, tanggal: tgl, absensi: status });
       simpanKeStorage();
-      renderSetoranList();
+      renderDashboard();
     }
 
     function simpanSetoran(santriId) {
@@ -788,7 +953,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
 
       simpanKeStorage();
       alert('Setoran berhasil disimpan!');
-      renderSetoranList();
+      renderDashboard();
     }
 
     function kirimWA(santriId) {
@@ -806,6 +971,47 @@ _Jazakumullah Khairan Katsiran._ 🙏
 
       const target = santri.wa ? santri.wa.replace(/[^0-9]/g, '') : '';
       window.open(`https://wa.me/${target}?text=${encodeURIComponent(msg)}`, '_blank');
+    }
+
+    // ===== KIRIM MASUK BELAJAR (manual, pakai teks & jam dari Pengaturan) =====
+    function kirimMasukBelajarSekarang() {
+      if (modeDashboard === 'PRIVAT') { kirimMasukBelajarPrivat(); return; }
+      if (!confirm('Kirim pesan "Masuk Belajar" sekarang ke grup WA sesuai jadwal hari ini?')) return;
+
+      fetch(`${WORKER_BASE_URL}/tes-reminder`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.ok && data.fonnte) alert('Berhasil terkirim ke grup ' + (data.kelompok || '') + '!');
+          else alert('Gagal/tidak terkirim: ' + (data.info || data.error || 'lihat log worker'));
+        })
+        .catch(err => alert('Gagal menghubungi Worker: ' + err.message));
+    }
+
+    function kirimMasukBelajarPrivat() {
+      const terpilih = listSantri.filter(s => s.kelompok === 'PRIVAT' && document.getElementById(`chk-privat-${s.id}`)?.checked);
+      if (terpilih.length === 0) { alert('Centang dulu santri yang mau dikirimi.'); return; }
+      if (!confirm(`Kirim pesan "Masuk Belajar" ke ${terpilih.length} santri terpilih?`)) return;
+
+      terpilih.forEach(s => {
+        const pesan = (s.privatPesan || `Assalamu'alaikum, hari ini ada jadwal ngaji privat untuk {nama}.`).replaceAll('{nama}', s.nama);
+        kirimOtomatisKeGrupWA(pesan, s.wa);
+      });
+    }
+
+    function kirimLiburPrivat(alasanFinal, namaHari, tgl) {
+      const terpilih = listSantri.filter(s => s.kelompok === 'PRIVAT' && document.getElementById(`chk-privat-${s.id}`)?.checked);
+      if (terpilih.length === 0) { alert('Centang dulu santri yang mau dikirimi.'); return; }
+
+      const templateLibur = localStorage.getItem('tpqTeksLibur') || TEKS_LIBUR_BAWAAN;
+      terpilih.forEach(s => {
+        const msg = templateLibur
+          .replaceAll('{hari}', namaHari)
+          .replaceAll('{tanggal}', tgl)
+          .replaceAll('{kelompok}', 'Privat')
+          .replaceAll('{alasan}', alasanFinal)
+          .replaceAll('{nama}', s.nama);
+        kirimOtomatisKeGrupWA(msg, s.wa);
+      });
     }
 
     function pengumumanLiburMendadak() {
@@ -837,12 +1043,15 @@ _Jazakumullah Khairan Katsiran._ 🙏
       else if (pilihan === "3") alasanFinal = opsiAlasan[2];
       else if (pilihan === "4") alasanFinal = opsiAlasan[3];
 
-      const dayNum = new Date(tgl).getDay();
-      let kelompokStr = "Banat & Banin";
-      if ([1, 3, 5].includes(dayNum)) kelompokStr = "BANAT (Perempuan)";
-      else if ([2, 4, 6].includes(dayNum)) kelompokStr = "BANIN (Laki-Laki)";
+      // Mode Privat: kirim manual cuma ke santri yang dicentang, tidak menandai LIBUR massal
+      if (modeDashboard === 'PRIVAT') {
+        kirimLiburPrivat(alasanFinal, namaHari, tgl);
+        return;
+      }
 
-      listSantri.forEach(s => {
+      const kelompokStr = modeDashboard === 'BANAT' ? 'BANAT (Perempuan)' : 'BANIN (Laki-Laki)';
+
+      getSantriFilterKelompok().forEach(s => {
         let idx = listLog.findIndex(l => l.santriId === s.id && l.tanggal === tgl);
         if (idx > -1) {
           listLog[idx].absensi = 'LIBUR';
@@ -859,7 +1068,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
       });
 
       simpanKeStorage();
-      renderSetoranList();
+      renderDashboard();
 
       const templateLibur = localStorage.getItem('tpqTeksLibur') || TEKS_LIBUR_BAWAAN;
       const msg = templateLibur
@@ -868,13 +1077,9 @@ _Jazakumullah Khairan Katsiran._ 🙏
         .replaceAll('{kelompok}', kelompokStr)
         .replaceAll('{alasan}', alasanFinal);
 
-      let targetGrup;
-      if ([1, 3, 5].includes(dayNum)) targetGrup = GROUP_ID_BANAT;
-      else if ([2, 4, 6].includes(dayNum)) targetGrup = GROUP_ID_BANIN;
-      else targetGrup = [GROUP_ID_BANAT, GROUP_ID_BANIN]; // Minggu / tanggal lain: kirim ke keduanya
+      const targetGrup = modeDashboard === 'BANAT' ? GROUP_ID_BANAT : GROUP_ID_BANIN;
 
-      const labelTarget = Array.isArray(targetGrup) ? 'kedua grup (Banat & Banin)' : `grup ${kelompokStr}`;
-      if (confirm(`Kirim pengumuman ini otomatis ke ${labelTarget} sekarang?`)) {
+      if (confirm(`Kirim pengumuman ini otomatis ke grup ${kelompokStr} sekarang?`)) {
         kirimOtomatisKeGrupWA(msg, targetGrup);
       }
     }
@@ -1065,7 +1270,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
 
       simpanKeStorage();
       renderSantriTable();
-      renderSetoranList();
+      renderDashboard();
       syncJadwalPrivatKeWorker();
       tutupModalSantri();
     }
@@ -1075,7 +1280,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
         listSantri = listSantri.filter(s => s.id !== id);
         simpanKeStorage();
         renderSantriTable();
-        renderSetoranList();
+        renderDashboard();
         syncJadwalPrivatKeWorker();
       }
     }
