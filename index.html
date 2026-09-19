@@ -297,9 +297,10 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="block font-bold text-slate-600 mb-1">Kelompok/Gender</label>
-            <select id="s-kelompok" class="w-full border rounded-lg p-2 outline-none">
+            <select id="s-kelompok" onchange="toggleFieldPrivat()" class="w-full border rounded-lg p-2 outline-none">
               <option value="BANAT">Banat (Perempuan)</option>
               <option value="BANIN">Banin (Laki-Laki)</option>
+              <option value="PRIVAT">Privat</option>
             </select>
           </div>
           <div>
@@ -319,8 +320,61 @@
           <label class="block font-bold text-slate-600 mb-1">No. WhatsApp Orang Tua</label>
           <input type="tel" id="s-wa" placeholder="Contoh: 628123456789" class="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-emerald-500">
         </div>
+
+        <div id="privat-fields-wrap" class="hidden space-y-2.5 border-t pt-3 mt-1">
+          <p class="font-bold text-amber-700 flex items-center gap-1.5"><i class="fa-solid fa-user-clock"></i> Jadwal Auto-Send Privat</p>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Hari Mengaji</label>
+            <div class="flex flex-wrap gap-1.5">
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="1" class="s-privat-hari"> Sen</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="2" class="s-privat-hari"> Sel</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="3" class="s-privat-hari"> Rab</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="4" class="s-privat-hari"> Kam</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="5" class="s-privat-hari"> Jum</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="6" class="s-privat-hari"> Sab</label>
+              <label class="flex items-center gap-1 border rounded-lg px-2 py-1 cursor-pointer"><input type="checkbox" value="0" class="s-privat-hari"> Ahad</label>
+            </div>
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Jam Kirim Reminder</label>
+            <input type="time" id="s-privat-jam" value="16:00" class="border rounded-lg p-2 outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-600 mb-1">Teks Pesan (placeholder: {nama})</label>
+            <textarea id="s-privat-pesan" rows="3" placeholder="Assalamu'alaikum, hari ini ada jadwal ngaji privat untuk {nama}. Ditunggu kehadirannya ya 🙏" class="w-full border rounded-lg p-2 outline-none text-xs"></textarea>
+          </div>
+          <label class="flex items-center gap-2 font-bold text-slate-600">
+            <input type="checkbox" id="s-privat-aktif" checked> Aktifkan Auto-Send
+          </label>
+        </div>
+
         <div class="flex justify-end gap-2 pt-2 border-t">
           <button type="button" onclick="tutupModalSantri()" class="px-3 py-1.5 rounded-lg border font-semibold text-slate-600">Batal</button>
+          <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow">Simpan</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH/EDIT KITAB -->
+  <div id="modal-kitab-tambah" class="fixed inset-0 bg-black/60 z-50 hidden flex items-center justify-center p-3 no-print">
+    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-4 space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 id="modal-kitab-tambah-title" class="font-bold text-slate-800 text-sm">Tambah Kitab</h3>
+        <button onclick="tutupModalTambahKitab()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <form id="form-kitab" onsubmit="simpanKitab(event)" class="space-y-2.5 text-xs">
+        <input type="hidden" id="k-id">
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Nama Kitab</label>
+          <input type="text" id="k-nama" required placeholder="Misal: Fathurrahman Jilid 3" class="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label class="block font-bold text-slate-600 mb-1">Deskripsi</label>
+          <textarea id="k-deskripsi" rows="2" placeholder="Misal: Mad Far'i & Waqaf" class="w-full border rounded-lg p-2 outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2 border-t">
+          <button type="button" onclick="tutupModalTambahKitab()" class="px-3 py-1.5 rounded-lg border font-semibold text-slate-600">Batal</button>
           <button type="submit" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow">Simpan</button>
         </div>
       </form>
@@ -451,6 +505,27 @@ _Jazakumullah Khairan Katsiran._ 🙏
           statusEl.textContent = '❌ Tidak bisa terhubung ke server.';
           statusEl.className = 'text-xs text-center text-rose-600 font-bold';
         });
+    }
+
+    // Sinkronisasi jadwal auto-send santri Privat ke Worker (KV)
+    function syncJadwalPrivatKeWorker() {
+      const jadwalPrivat = listSantri
+        .filter(s => s.kelompok === 'PRIVAT')
+        .map(s => ({
+          id: s.id,
+          nama: s.nama,
+          wa: s.wa,
+          hari: s.privatHari || [],
+          jam: s.privatJam || '16:00',
+          pesan: s.privatPesan || '',
+          aktif: s.privatAktif !== false
+        }));
+
+      fetch(`${WORKER_BASE_URL}/simpan-privat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ appKey: APP_KEY, jadwalPrivat })
+      }).catch(() => { /* diam saja kalau gagal, tidak mengganggu penyimpanan lokal */ });
     }
 
     // Kirim ke satu atau beberapa grup sekaligus.
@@ -811,14 +886,63 @@ _Jazakumullah Khairan Katsiran._ 🙏
       listKitab.forEach(k => {
         const cnt = listSantri.filter(s => s.kitabSpesifik === k.nama).length;
         grid.innerHTML += `
-          <div onclick="bukaModalKitabDetail('${k.nama}')" class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 cursor-pointer hover:border-emerald-500 transition-all space-y-2">
-            <div class="flex justify-between items-start">
+          <div class="bg-white p-3.5 rounded-xl shadow-sm border border-slate-200 hover:border-emerald-500 transition-all space-y-2">
+            <div class="flex justify-between items-start cursor-pointer" onclick="bukaModalKitabDetail('${k.nama}')">
               <h3 class="font-bold text-slate-800 text-xs">${k.nama}</h3>
               <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-extrabold text-[10px]">${cnt} Santri</span>
             </div>
-            <p class="text-[11px] text-slate-500">${k.deskripsi}</p>
+            <p class="text-[11px] text-slate-500 cursor-pointer" onclick="bukaModalKitabDetail('${k.nama}')">${k.deskripsi}</p>
+            <div class="flex gap-2 pt-1.5 border-t text-[11px] font-bold">
+              <button onclick="bukaModalTambahKitab('${k.id}')" class="flex-1 text-blue-600 hover:text-blue-800 flex items-center justify-center gap-1 py-1"><i class="fa-solid fa-pen"></i> Edit</button>
+              <button onclick="hapusKitab('${k.id}')" class="flex-1 text-rose-600 hover:text-rose-800 flex items-center justify-center gap-1 py-1"><i class="fa-solid fa-trash"></i> Hapus</button>
+            </div>
           </div>`;
       });
+    }
+
+    function bukaModalTambahKitab(id) {
+      document.getElementById('form-kitab').reset();
+      if (id) {
+        const k = listKitab.find(x => x.id === id);
+        if (!k) return;
+        document.getElementById('modal-kitab-tambah-title').innerText = 'Edit Kitab';
+        document.getElementById('k-id').value = k.id;
+        document.getElementById('k-nama').value = k.nama;
+        document.getElementById('k-deskripsi').value = k.deskripsi;
+      } else {
+        document.getElementById('modal-kitab-tambah-title').innerText = 'Tambah Kitab';
+        document.getElementById('k-id').value = '';
+      }
+      document.getElementById('modal-kitab-tambah').classList.remove('hidden');
+    }
+
+    function tutupModalTambahKitab() {
+      document.getElementById('modal-kitab-tambah').classList.add('hidden');
+    }
+
+    function simpanKitab(e) {
+      e.preventDefault();
+      const id = document.getElementById('k-id').value;
+      const nama = document.getElementById('k-nama').value;
+      const deskripsi = document.getElementById('k-deskripsi').value;
+
+      if (id) {
+        const idx = listKitab.findIndex(k => k.id === id);
+        if (idx > -1) listKitab[idx] = { id, nama, deskripsi };
+      } else {
+        listKitab.push({ id: 'k-' + Date.now(), nama, deskripsi });
+      }
+      simpanKeStorage();
+      renderKitabGrid();
+      tutupModalTambahKitab();
+    }
+
+    function hapusKitab(id) {
+      if (confirm('Hapus kitab ini? (Data santri yang pakai kitab ini tidak ikut terhapus)')) {
+        listKitab = listKitab.filter(k => k.id !== id);
+        simpanKeStorage();
+        renderKitabGrid();
+      }
     }
 
     function bukaModalKitabDetail(namaKitab) {
@@ -852,23 +976,61 @@ _Jazakumullah Khairan Katsiran._ 🙏
     function renderSantriTable() {
       const tbody = document.getElementById('tbl-santri-body');
       tbody.innerHTML = '';
+      const warnaBadge = { BANAT: 'bg-pink-100 text-pink-700', BANIN: 'bg-blue-100 text-blue-700', PRIVAT: 'bg-amber-100 text-amber-700' };
+      const namaHariSingkat = ['Ahad','Sen','Sel','Rab','Kam','Jum','Sab'];
       listSantri.forEach(s => {
+        let kolomProgram = `${s.program} (${s.kitabSpesifik||'-'})`;
+        if (s.kelompok === 'PRIVAT') {
+          const hariStr = (s.privatHari||[]).map(h => namaHariSingkat[h]).join(', ') || '-';
+          kolomProgram = `${s.program} • Jadwal: ${hariStr} ${s.privatJam||''} ${s.privatAktif===false ? '(nonaktif)' : ''}`;
+        }
         tbody.innerHTML += `
           <tr class="hover:bg-slate-50">
             <td class="p-3 font-bold text-slate-800">${s.nama}</td>
-            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.kelompok==='BANAT'?'bg-pink-100 text-pink-700':'bg-blue-100 text-blue-700'}">${s.kelompok}</span></td>
-            <td class="p-3">${s.program} (${s.kitabSpesifik||'-'})</td>
+            <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${warnaBadge[s.kelompok]||''}">${s.kelompok}</span></td>
+            <td class="p-3">${kolomProgram}</td>
             <td class="p-3 text-slate-500">${s.wa||'-'}</td>
-            <td class="p-3 text-center">
+            <td class="p-3 text-center whitespace-nowrap">
+              <button onclick="bukaModalSantri('${s.id}')" class="text-blue-600 hover:text-blue-800 mr-2"><i class="fa-solid fa-pen"></i></button>
               <button onclick="hapusSantri('${s.id}')" class="text-rose-600 hover:text-rose-800"><i class="fa-solid fa-trash"></i></button>
             </td>
           </tr>`;
       });
     }
 
-    function bukaModalSantri() {
+    function toggleFieldPrivat() {
+      const kelompok = document.getElementById('s-kelompok').value;
+      document.getElementById('privat-fields-wrap').classList.toggle('hidden', kelompok !== 'PRIVAT');
+    }
+
+    function bukaModalSantri(id) {
       document.getElementById('form-santri').reset();
-      document.getElementById('s-id').value = '';
+      document.querySelectorAll('.s-privat-hari').forEach(cb => cb.checked = false);
+
+      if (id) {
+        const s = listSantri.find(x => x.id === id);
+        if (!s) return;
+        document.getElementById('modal-santri-title').innerText = 'Edit Data Santri';
+        document.getElementById('s-id').value = s.id;
+        document.getElementById('s-nama').value = s.nama;
+        document.getElementById('s-kelompok').value = s.kelompok;
+        document.getElementById('s-program').value = s.program;
+        document.getElementById('s-kitab').value = s.kitabSpesifik || '';
+        document.getElementById('s-wa').value = s.wa || '';
+        if (s.kelompok === 'PRIVAT') {
+          (s.privatHari || []).forEach(h => {
+            const cb = document.querySelector(`.s-privat-hari[value="${h}"]`);
+            if (cb) cb.checked = true;
+          });
+          document.getElementById('s-privat-jam').value = s.privatJam || '16:00';
+          document.getElementById('s-privat-pesan').value = s.privatPesan || '';
+          document.getElementById('s-privat-aktif').checked = s.privatAktif !== false;
+        }
+      } else {
+        document.getElementById('modal-santri-title').innerText = 'Tambah Data Santri';
+        document.getElementById('s-id').value = '';
+      }
+      toggleFieldPrivat();
       document.getElementById('modal-santri').classList.remove('hidden');
     }
 
@@ -878,16 +1040,33 @@ _Jazakumullah Khairan Katsiran._ 🙏
 
     function simpanSantri(e) {
       e.preventDefault();
+      const id = document.getElementById('s-id').value;
       const nama = document.getElementById('s-nama').value;
       const kelompok = document.getElementById('s-kelompok').value;
       const program = document.getElementById('s-program').value;
       const kitabSpesifik = document.getElementById('s-kitab').value;
       const wa = document.getElementById('s-wa').value;
 
-      listSantri.push({ id: 's-' + Date.now(), nama, kelompok, program, kitabSpesifik, wa });
+      const data = { nama, kelompok, program, kitabSpesifik, wa };
+
+      if (kelompok === 'PRIVAT') {
+        data.privatHari = Array.from(document.querySelectorAll('.s-privat-hari:checked')).map(cb => Number(cb.value));
+        data.privatJam = document.getElementById('s-privat-jam').value || '16:00';
+        data.privatPesan = document.getElementById('s-privat-pesan').value;
+        data.privatAktif = document.getElementById('s-privat-aktif').checked;
+      }
+
+      if (id) {
+        const idx = listSantri.findIndex(s => s.id === id);
+        if (idx > -1) listSantri[idx] = { id, ...data };
+      } else {
+        listSantri.push({ id: 's-' + Date.now(), ...data });
+      }
+
       simpanKeStorage();
       renderSantriTable();
       renderSetoranList();
+      syncJadwalPrivatKeWorker();
       tutupModalSantri();
     }
 
@@ -897,6 +1076,7 @@ _Jazakumullah Khairan Katsiran._ 🙏
         simpanKeStorage();
         renderSantriTable();
         renderSetoranList();
+        syncJadwalPrivatKeWorker();
       }
     }
 
