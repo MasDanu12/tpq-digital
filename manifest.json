@@ -1,0 +1,23 @@
+{
+  "short_name": "TPQ Digital",
+  "name": "TPQ Digital Pro - Absensi & Setoran",
+  "description": "Aplikasi Absensi, Tracking Setoran Kitab, Murojaah Hafalan & Keuangan TPQ",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "./index.html",
+  "scope": "./",
+  "background_color": "#047857",
+  "theme_color": "#047857",
+  "display": "standalone",
+  "orientation": "portrait"
+}
