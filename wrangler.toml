@@ -9,5 +9,5 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "ngaji-tracker-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "a48bd050-29f1-4551-835d-a37c9db244d5"
 migrations_dir = "migrations"
