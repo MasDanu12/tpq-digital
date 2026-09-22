@@ -1,103 +1,43 @@
-const state={view:'dashboard', group:'Banin', students:[], selected:null, tab:'Pencapaian', modal:false};
-const defaultStudents=[
- {id:1,nama:'Ahmad',gender:'Laki-laki',wali:'Bapak Ahmad',wa:'081234567890',group:'Banin',level:'Faturrahman',page:'24',line:'1–4'},
- {id:2,nama:'Budi',gender:'Laki-laki',wali:'Ibu Budi',wa:'081234567891',group:'Banin',level:'Al-Bayan',page:'18',line:'1–3'},
- {id:3,nama:'Siti',gender:'Perempuan',wali:'Ibu Siti',wa:'081234567892',group:'Banat',level:'Al-Qur\'an',page:'604',line:'1–5'},
- {id:4,nama:'Fajar',gender:'Laki-laki',wali:'Bapak Fajar',wa:'081234567893',group:'Private',level:'Faturrahman',page:'12',line:'1–3'}
-];
-state.students=JSON.parse(localStorage.getItem('ngaji_students')||'null')||defaultStudents;
-const save=()=>localStorage.setItem('ngaji_students',JSON.stringify(state.students));
-const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const groups=['Banin','Banat','Private'];
-const tabs=['Pencapaian','Adab','Ranking','Bintang','Kehadiran','Tracker','Tajwid','Faturrahman','Al-Bayan',"Al-Qur'an",'Hafalan Qur\'an','Hafalan Doa','Hafalan Hadis'];
-
+const G=["Banin","Banat","Private"];
+const T=["Pencapaian","Adab","Ranking","Bintang","Kehadiran","Tracker","Tajwid","Faturrahman","Al-Bayan","Al-Qur’an","Hafalan Qur’an","Hafalan Doa","Hafalan Hadis"];
+const seed=[
+{id:"1",name:"Ahmad",gender:"Laki-laki",guardian:"Bapak Ahmad",wa:"081234567890",group:"Banin",level:"Faturrahman",position:"Jilid 1"},
+{id:"2",name:"Budi",gender:"Laki-laki",guardian:"Ibu Budi",wa:"081234567891",group:"Banin",level:"Al-Bayan",position:"Jilid 2"},
+{id:"3",name:"Siti",gender:"Perempuan",guardian:"Ibu Siti",wa:"081234567892",group:"Banat",level:"Al-Qur’an",position:"Juz 30"},
+{id:"4",name:"Fajar",gender:"Laki-laki",guardian:"Bapak Fajar",wa:"081234567893",group:"Private",level:"Fashiatul Huruf",position:"Tahap 2"}];
+const s={page:"dashboard",group:"Banin",students:load(),modal:null,profile:null,tab:"Pencapaian",toast:""};
+function load(){try{return JSON.parse(localStorage.getItem("tpq_students_v2"))||seed}catch{return seed}}
+function save(){localStorage.setItem("tpq_students_v2",JSON.stringify(s.students))}
+const esc=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+const ini=n=>n.split(/\s+/).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+const ico=x=>({home:"⌂",banin:"◉",banat:"◉",private:"◇",report:"▤",setting:"⚙"}[x]||"•");
 function render(){
- const app=document.querySelector('#app');
- app.innerHTML=`<div class="app">${header()}<main class="content">${page()}</main>${bottom()}${state.modal?modal():''}</div>`;
- bind();
-}
-function header(){return `<header class="top"><h1>Ngaji Tracker</h1><p>Kelola perkembangan santri secara rapi dan berkelanjutan</p></header>`}
-function page(){
- if(state.view==='dashboard')return dashboard();
- if(['Banin','Banat','Private'].includes(state.view))return groupPage(state.view);
- if(state.view==='Raport')return reportPage();
- return settingPage();
-}
-function dashboard(){
- const count=g=>state.students.filter(s=>s.group===g).length;
- return `<div class="grid">
-  <div class="card stat"><b>${state.students.length}</b><span>Total Santri</span></div>
-  <div class="card stat"><b>${count('Banin')}</b><span>Banin</span></div>
-  <div class="card stat"><b>${count('Banat')}</b><span>Banat</span></div>
-  <div class="card stat"><b>${count('Private')}</b><span>Private</span></div>
- </div>
- <div class="section">Informasi Hari Ini</div>
- <div class="card list">
-  <div class="between"><span>Kehadiran</span><span class="pill">Belum ada sesi</span></div>
-  <div class="between"><span>Pencapaian terbaru</span><span class="pill">0</span></div>
-  <div class="between"><span>Jadwal</span><span class="pill">Atur di Setting</span></div>
- </div>
- <div class="section">Ringkasan</div>
- <div class="card"><p class="muted">Dashboard hanya menampilkan informasi dan ringkasan. Proses pembelajaran dimulai dari Banin, Banat, atau Private.</p></div>`;
-}
-function groupPage(group){
- const list=state.students.filter(s=>s.group===group);
- return `<div class="between"><div><h2>${group}</h2><div class="muted">${list.length} santri</div></div><button class="btn" data-add>+ Tambah</button></div>
- <div class="row" style="margin:12px 0"><button class="btn secondary" data-start="${group}">Mulai Pembelajaran</button></div>
- <div class="list">${list.length?list.map(s=>`<div class="card student" data-student="${s.id}"><div><strong>${esc(s.nama)}</strong><div class="muted">${esc(s.level)} • Hal. ${esc(s.page)} • Baris ${esc(s.line)}</div></div><span class="pill">Profil ›</span></div>`).join(''):'<div class="card empty">Belum ada santri di kelompok ini.</div>'}</div>`;
-}
-function profile(s){
- return `<div class="between"><div><button class="btn secondary" data-back>‹ Kembali</button><h2 style="margin-top:12px">${esc(s.nama)}</h2><div class="muted">${s.group} • ${esc(s.level)}</div></div><button class="btn secondary" data-edit="${s.id}">Edit</button></div>
- <div class="card" style="margin-top:12px"><div class="grid"><div><div class="muted">Wali</div><b>${esc(s.wali)}</b></div><div><div class="muted">WhatsApp</div><b>${esc(s.wa)}</b></div><div><div class="muted">Posisi</div><b>Hal. ${esc(s.page)}</b></div><div><div class="muted">Baris</div><b>${esc(s.line)}</b></div></div></div>
- <div class="tabs">${tabs.map(t=>`<button class="tab ${state.tab===t?'active':''}" data-tab="${esc(t)}">${esc(t)}</button>`).join('')}</div>
- <div class="card">${tabContent(s,state.tab)}</div>`;
-}
-function tabContent(s,t){
- if(t==='Pencapaian'||t==='Tracker'||t==='Faturrahman'||t==='Al-Bayan'||t==="Al-Qur'an"){
-  const level=(t==='Pencapaian'||t==='Tracker')?s.level:t;
-  if(t!=='Pencapaian'&&t!=='Tracker'&&t!==s.level)return `<div class="empty">Belum ada data ${esc(t)} untuk santri ini.</div>`;
-  return `<h3>${esc(level)}</h3><div class="timeline">
-   <div class="item"><b>19 Sep 2026</b><div class="muted">Halaman ${esc(s.page)} • Baris ${esc(s.line)}</div><div>Hasil: Baik</div><div class="muted">Koreksi: makhraj dan panjang pendek</div></div>
-   <div class="item"><b>17 Sep 2026</b><div class="muted">Halaman ${Math.max(1,+s.page-1)} • Baris 1–4</div><div>Hasil: Baik</div></div>
-  </div><div class="card" style="background:#f7faf9"><b>Target berikutnya</b><div class="muted">Halaman ${+s.page+1} • Baris 1–4</div></div>`;
- }
- if(t==='Kehadiran')return `<h3>Kehadiran</h3><div class="grid"><div class="card stat"><b>0</b><span>Hadir</span></div><div class="card stat"><b>0</b><span>Izin</span></div><div class="card stat"><b>0</b><span>Sakit</span></div><div class="card stat"><b>0</b><span>Alpa</span></div></div>`;
- if(t==='Adab')return `<h3>Adab</h3><div class="list">${['Adab kepada Al-Qur\'an','Kepada ustadz','Kepada teman','Disiplin','Kebersihan','Kemandirian','Tanggung jawab','Semangat'].map(x=>`<div class="between"><span>${x}</span><span class="pill">Belum dinilai</span></div>`).join('')}</div>`;
- if(t==='Ranking')return `<h3>Ranking</h3><div class="empty">Riwayat ranking akan terisi dari penilaian periode.</div>`;
- if(t==='Bintang')return `<h3>Bintang</h3><div style="font-size:30px">0</div><div class="muted">Belum ada bintang.</div>`;
- if(t==='Tajwid')return `<h3>Tajwid</h3><div class="empty">Belum ada penilaian tajwid.</div>`;
- return `<h3>${esc(t)}</h3><div class="empty">Belum ada data. Data akan muncul ketika santri mulai mengambil ${esc(t)}.</div>`;
-}
-function reportPage(){return `<h2>Raport</h2><div class="card"><p class="muted">Pilih santri untuk membuat draft raport berdasarkan data pembelajaran, kehadiran, adab, tajwid, hafalan, pencapaian, dan tracker.</p><div class="list">${state.students.map(s=>`<button class="btn secondary" data-report="${s.id}" style="text-align:left">${esc(s.nama)} — ${esc(s.level)}</button>`).join('')}</div></div>`}
-function settingPage(){return `<h2>Setting</h2><div class="list"><div class="card"><b>Identitas TPQ</b><p class="muted">Nama lembaga, alamat, kepala TPQ untuk header raport.</p></div><div class="card"><b>Jadwal & Libur</b><p class="muted">Atur jadwal pembelajaran dan pesan libur.</p></div><div class="card"><b>Template WhatsApp</b><p class="muted">Atur pesan dan variabel {{nama}}, {{tanggal}}, {{kitab}}.</p></div><div class="card"><b>Backup & Restore</b><p class="muted">Ekspor dan impor seluruh data.</p></div><div class="card"><b>Info Aplikasi</b><p class="muted">Ngaji Tracker v0.1.0</p></div></div>`}
-function bottom(){const items=['Dashboard','Banin','Banat','Private','Raport','Setting'];return `<nav class="bottom"><div class="nav">${items.map(x=>`<button class="${state.view===x?'active':''}" data-nav="${x}">${x}</button>`).join('')}</div></nav>`}
+document.querySelector("#app").innerHTML=`<div class="app">${top()}<main class="main">${page()}</main>${nav()}${s.modal?modal():""}${s.toast?`<div class="toast">${esc(s.toast)}</div>`:""}</div>`;bind()}
+function top(){return `<header class="top"><div class="topin"><div class="brand"><div class="mark">T</div><div><div class="bt">TPQ Digital</div><div class="bs">Ngaji Tracker</div></div></div><button class="ib" data-a="settings">⚙</button></div></header>`}
+function nav(){let a=[["dashboard","home","Dashboard"],["group","banin","Banin"],["group","banat","Banat"],["group","private","Private"],["report","report","Raport"],["setting","setting","Setting"]];return `<nav class="nav"><div class="navin">${a.map(x=>`<button class="ni ${x[0]=="group"?(s.page=="group"&&s.group==x[2]?"on":""):(s.page==x[0]?"on":"")}" data-p="${x[0]}" data-g="${x[2]}"><span>${ico(x[1])}</span><span>${x[2]}</span></button>`).join("")}</div></nav>`}
+function page(){return s.page=="dashboard"?dash():s.page=="group"?group():s.page=="report"?report():setting()}
+function dash(){return `<h1 class="title">Dashboard</h1><p class="sub">Ringkasan kegiatan dan perkembangan santri.</p><div class="hero"><div class="hl">Total Santri</div><div class="hv">${s.students.length}</div><div class="hn">Ringkasan data TPQ</div></div><div class="grid2"><div class="card"><div class="sl">Hadir hari ini</div><div class="sv">—</div></div><div class="card"><div class="sl">Pencapaian bulan ini</div><div class="sv">—</div></div></div><div class="sec"><div class="sh"><div class="st">Kelompok</div></div><div class="gg">${G.map(g=>`<button class="gc" data-open-g="${g}"><div class="dot"></div><div class="gn">${g}</div><div class="gcnt">${s.students.filter(x=>x.group==g).length} santri</div></button>`).join("")}</div></div><div class="sec"><div class="sh"><div class="st">Informasi</div></div><div class="card notice">Dashboard hanya menampilkan ringkasan. Pencatatan pembelajaran dilakukan dari halaman kelompok melalui <b>Mulai Pembelajaran</b>.</div></div>`}
+function group(){let a=s.students.filter(x=>x.group==s.group);return `<h1 class="title">${s.group}</h1><p class="sub">${a.length} santri dalam kelompok ini.</p><div class="chips">${G.map(g=>`<button class="chip ${g==s.group?"on":""}" data-sg="${g}">${g}</button>`).join("")}</div><div class="card"><div class="sh"><div><div class="st">Sesi pembelajaran</div><div class="rmeta">Panggil santri dan catat pembelajaran hari ini.</div></div></div><button class="btn primary" data-a="session">Mulai Pembelajaran</button></div><div class="sec"><div class="sh"><div class="st">Daftar Santri</div><button class="act" data-a="add">+ Tambah</button></div><div class="list">${a.length?a.map(row).join(""):`<div class="card notice">Belum ada santri di kelompok ini.</div>`}</div></div>`}
+function row(x){return `<button class="row" data-prof="${x.id}"><div class="av">${ini(x.name)}</div><div class="rm"><div class="rn">${esc(x.name)}</div><div class="rmeta">${esc(x.level)} · ${esc(x.position)}</div></div><div class="chev">›</div></button>`}
+function report(){return `<h1 class="title">Raport</h1><p class="sub">Buat, edit, dan siapkan raport perkembangan santri.</p><div class="card"><div class="st">Modul raport</div><p class="rmeta" style="line-height:1.6;margin:8px 0 15px">PDF A4, draft AI, edit sebelum final, dan pengiriman WhatsApp akan terhubung setelah modul data pembelajaran selesai.</p><button class="btn secondary" data-a="report">Lihat alur raport</button></div>`}
+function setting(){let a=[["Identitas TPQ","Nama, alamat, dan kepala TPQ"],["WhatsApp","Template pesan dan pengiriman laporan"],["Backup & Restore","Cadangan seluruh data aplikasi"],["Reset Data","Hapus data lokal dengan konfirmasi"],["Info Aplikasi","Versi dan informasi pengembang"]];return `<h1 class="title">Setting</h1><p class="sub">Identitas TPQ dan pengaturan aplikasi.</p><div class="card">${a.map(x=>`<button class="setting" data-set="${x[0]}"><div><div class="settitle">${x[0]}</div><div class="setdesc">${x[1]}</div></div><span class="chev">›</span></button>`).join("")}</div>`}
 function modal(){
- const s=state.selected;
- if(s&&state.modal==='profile')return `<div class="modal"><div class="sheet">${profile(s)}</div></div>`;
- if(state.modal==='add'||state.modal==='edit'){
-  const e=s||{}; return `<div class="modal"><div class="sheet"><button class="close" data-close>×</button><h2>${state.modal==='add'?'Tambah Santri':'Edit Santri'}</h2><form class="form" data-form>
-  <label>Nama anak<input name="nama" required value="${esc(e.nama)}"></label>
-  <label>Jenis kelamin<select name="gender"><option ${e.gender==='Laki-laki'?'selected':''}>Laki-laki</option><option ${e.gender==='Perempuan'?'selected':''}>Perempuan</option></select></label>
-  <label>Nama wali<input name="wali" value="${esc(e.wali)}"></label>
-  <label>No. WhatsApp wali<input name="wa" value="${esc(e.wa)}"></label>
-  <label>Kelompok<select name="group">${groups.map(g=>`<option ${e.group===g?'selected':''}>${g}</option>`).join('')}</select></label>
-  <label>Jenjang awal<select name="level">${['Faturrahman','Al-Bayan',"Al-Qur'an",'Fashiatul Huruf'].map(g=>`<option ${e.level===g?'selected':''}>${g}</option>`).join('')}</select></label>
-  <label>Halaman awal<input name="page" value="${esc(e.page||'1')}"></label>
-  <label>Baris awal<input name="line" value="${esc(e.line||'1–3')}"></label>
-  <button class="btn" type="submit">Simpan</button></form></div></div>`;
- }
- return '';
-}
+if(s.modal=="profile"){let x=s.students.find(a=>a.id==s.profile);return `<div class="modalbg"><div class="modal"><div class="handle"></div><div class="mh"><div class="mt">Profil Santri</div><button class="close" data-a="close">×</button></div><div class="ph"><div class="pav">${ini(x.name)}</div><div><div class="pn">${esc(x.name)}</div><div class="pm">${x.group} · ${x.gender}</div></div></div><div class="pg"><div class="mini"><div class="ml">Jenjang</div><div class="mv">${esc(x.level)}</div></div><div class="mini"><div class="ml">Posisi</div><div class="mv">${esc(x.position)}</div></div><div class="mini"><div class="ml">Wali</div><div class="mv">${esc(x.guardian)}</div></div><div class="mini"><div class="ml">WhatsApp</div><div class="mv">${esc(x.wa)}</div></div></div><div class="tabs">${T.slice(0,7).map(t=>`<button class="tab ${s.tab==t?"on":""}" data-tab="${t}">${t}</button>`).join("")}</div><div class="card" style="box-shadow:none;background:#f8faf9">${tab(x)}</div></div></div>`}
+if(s.modal=="add")return `<div class="modalbg"><div class="modal"><div class="handle"></div><div class="mh"><div class="mt">Tambah Santri</div><button class="close" data-a="close">×</button></div><form id="form" class="form"><div class="field"><label>Nama anak</label><input name="name" required></div><div class="field"><label>Jenis kelamin</label><select name="gender"><option>Laki-laki</option><option>Perempuan</option></select></div><div class="field"><label>Nama wali</label><input name="guardian" required></div><div class="field"><label>No. WhatsApp wali</label><input name="wa" inputmode="tel"></div><div class="field"><label>Grup</label><select name="group">${G.map(g=>`<option ${g==s.group?"selected":""}>${g}</option>`).join("")}</select></div><div class="field"><label>Jenjang awal</label><select name="level"><option>Faturrahman</option><option>Al-Bayan</option><option>Al-Qur’an</option><option>Fashiatul Huruf</option></select></div><div class="field"><label>Posisi awal</label><input name="position" placeholder="Contoh: Jilid 1"></div><button class="btn primary">Simpan Santri</button></form></div></div>`;
+if(s.modal=="session")return `<div class="modalbg"><div class="modal"><div class="handle"></div><div class="mh"><div><div class="mt">Mulai Pembelajaran</div><div class="rmeta">${s.group} · ${s.students.filter(x=>x.group==s.group).length} santri</div></div><button class="close" data-a="close">×</button></div><div class="notice" style="margin-bottom:12px">Alur sesi sudah disiapkan; penyimpanan riwayat permanen akan memakai D1 pada tahap berikutnya.</div><div class="list">${s.students.filter(x=>x.group==s.group).map(x=>`<button class="row" data-call="${x.id}"><div class="av">${ini(x.name)}</div><div class="rm"><div class="rn">${esc(x.name)}</div><div class="rmeta">Belum dipanggil · ${esc(x.level)}</div></div><div class="chev">›</div></button>`).join("")}</div></div></div>`;
+return `<div class="modalbg"><div class="modal"><div class="handle"></div><div class="mh"><div class="mt">Informasi</div><button class="close" data-a="close">×</button></div><div class="notice">Pengaturan lengkap, database D1, AI, PDF, backup/restore, dan Fonnte akan dihubungkan pada tahap implementasi berikutnya.</div></div></div>`}
+function tab(x){if(s.tab=="Pencapaian")return `<div class="ir"><span class="muted">Status</span><span class="badge">Berjalan</span></div><div class="ir"><span class="muted">Jenjang aktif</span><b>${x.level}</b></div><div class="ir"><span class="muted">Posisi terakhir</span><b>${x.position}</b></div>`;if(s.tab=="Tracker")return `<div class="ir"><span>Faturrahman</span><span>${x.level=="Faturrahman"?"Aktif":"Riwayat"}</span></div><div class="ir"><span>Al-Bayan</span><span>${x.level=="Al-Bayan"?"Aktif":"Belum aktif"}</span></div><div class="ir"><span>Al-Qur’an</span><span>${x.level=="Al-Qur’an"?"Aktif":"Belum aktif"}</span></div>`;return `<div class="notice">Data ${esc(s.tab)} akan terhubung dengan catatan pembelajaran santri.</div>`}
 function bind(){
- document.querySelectorAll('[data-nav]').forEach(b=>b.onclick=()=>{state.view=b.dataset.nav;state.selected=null;render()});
- document.querySelectorAll('[data-student]').forEach(b=>b.onclick=()=>{state.selected=state.students.find(s=>s.id==b.dataset.student);state.tab='Pencapaian';state.modal='profile';render()});
- document.querySelectorAll('[data-add]').forEach(b=>b.onclick=()=>{state.modal='add';state.selected=null;render()});
- document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{state.modal='edit';render()});
- document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>{state.modal=false;render()});
- document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>{state.modal=false;render()});
- document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{state.tab=b.dataset.tab;render()});
- document.querySelectorAll('[data-start]').forEach(b=>b.onclick=()=>alert('Alur Mulai Pembelajaran akan dibuat pada modul sesi pembelajaran untuk kelompok '+b.dataset.start+'.'));
- document.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>alert('Draft raport untuk '+state.students.find(s=>s.id==b.dataset.report).nama+' akan dibuat dari data periode terpilih.'));
- const f=document.querySelector('[data-form]'); if(f)f.onsubmit=e=>{e.preventDefault();const d=Object.fromEntries(new FormData(f));if(state.modal==='add'){d.id=Date.now();state.students.push(d)}else Object.assign(state.selected,d);save();state.modal=false;render()};
+document.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{s.page=b.dataset.p;if(b.dataset.p=="group")s.group=b.dataset.g;render()});
+document.querySelectorAll("[data-open-g]").forEach(b=>b.onclick=()=>{s.group=b.dataset.openG;s.page="group";render()});
+document.querySelectorAll("[data-sg]").forEach(b=>b.onclick=()=>{s.group=b.dataset.sg;render()});
+document.querySelectorAll("[data-prof]").forEach(b=>b.onclick=()=>{s.profile=b.dataset.prof;s.tab="Pencapaian";s.modal="profile";render()});
+document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{s.tab=b.dataset.tab;render()});
+document.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>act(b.dataset.a));
+document.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{s.modal=b.dataset.set=="Reset Data"?"reset":"info";render()});
+document.querySelectorAll("[data-call]").forEach(b=>b.onclick=()=>toast("Santri dipilih untuk sesi hari ini."));
+let f=document.querySelector("#form");if(f)f.onsubmit=e=>{e.preventDefault();let d=Object.fromEntries(new FormData(f));s.students.push({id:Date.now().toString(),...d});save();s.modal=null;toast("Santri berhasil ditambahkan");render()}
 }
+function act(a){if(a=="close"){s.modal=null;render()}else if(a=="settings"){s.modal="info";render()}else if(a=="add"){s.modal="add";render()}else if(a=="session"){s.modal="session";render()}else if(a=="report"){s.modal="info";render()}}
+function toast(x){s.toast=x;render();setTimeout(()=>{s.toast="";render()},1500)}
 render();
