@@ -1220,12 +1220,12 @@ function bind() {
 
   $$("[data-closebg]").forEach(bg => bg.onclick = e => { if (e.target === bg) { S.modal = null; S.modalData = null; render(); } });
 
-  bindForms($);
+  bindForms($, $$);
 }
 
 function debounce(fn, ms) { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; }
 
-function bindForms($) {
+function bindForms($, $$) {
   const on = (id, fn) => { const f = $(id); if (f) f.onsubmit = e => { e.preventDefault(); fn(Object.fromEntries(new FormData(f))); }; };
 
   $$("form[data-setoran]").forEach(f => f.onsubmit = e => {
