@@ -310,7 +310,10 @@ function saveReport(r) {
 /* ---------- backup / restore ---------- */
 function exportObject() {
   const out = { version: 3, exportedAt: new Date().toISOString(), app: "TPQ Nurul Hidayah" };
-  Object.entries(DB_KEYS).forEach(([k, key]) => { out[k] = loadDB(key, Array.isArray(loadDB(key, [])) ? [] : {}); });
+  Object.entries(DB_KEYS).forEach(([k, key]) => {
+    const raw = localStorage.getItem(key);
+    out[k] = raw === null ? null : JSON.parse(raw);
+  });
   return out;
 }
 function exportData() { return JSON.stringify(exportObject(), null, 2); }

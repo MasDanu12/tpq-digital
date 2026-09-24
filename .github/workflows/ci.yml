@@ -20,6 +20,8 @@ jobs:
           node --check public/store.js
           node --check public/app.js
           echo "All JS files valid."
+      - name: Run smoke tests
+        run: node tests/smoke.test.js
       - name: Validate JSON files
         run: |
           node -e "JSON.parse(require('fs').readFileSync('public/manifest.json','utf8')); console.log('manifest.json valid')"
