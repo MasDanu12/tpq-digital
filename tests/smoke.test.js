@@ -27,7 +27,7 @@ const appEl = { innerHTML: "" };
 const documentStub = {
   getElementById: id => (id === "app" ? appEl : { classList: { add() {}, remove() {} } }),
   querySelector: () => null,
-  querySelectorAll: () => [],
+  querySelectorAll: () => ({ forEach: () => {} }),
   createElement: () => ({ click() {}, set href(v) {}, set download(v) {} }),
   body: { classList: { add() {}, remove() {} } },
 };
