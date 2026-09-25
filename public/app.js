@@ -200,7 +200,7 @@ function informasiPage() {
   const aktif = students.filter(x => x.status === "aktif");
   const count = g => aktif.filter(x => x.group === g).length;
   const attToday = attendanceToday();
-  const anns = getAnnouncements().slice(0, 3);
+  const anns = getAnnouncements().slice(0, 2);
   const grp = S.infoGroup || "Banin";
   const sel = aktif.filter(x => x.group === grp);
   const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
@@ -275,7 +275,7 @@ function informasiPage() {
         <b>Jadwal Kelas Hari Ini</b>
         <button class="slink" data-nav="kelas">Lihat Semua</button>
       </div>
-      ${sessionsToday.length ? sessionsToday.map(s => {
+      ${sessionsToday.length ? sessionsToday.slice(0, 3).map(s => {
         const rec = getRecords().find(r => r.sessionRef === s.id);
         return `
       <div class="schedrow">
@@ -286,6 +286,7 @@ function informasiPage() {
         <span class="badge ${s.status === "berjalan" ? "ok" : "mute"}">${s.status === "berjalan" ? "Sedang Berlangsung" : "Selesai"}</span>
       </div>`;
       }).join("") : `<div class="notice">Belum ada jadwal/sesi hari ini. Mulai kelas dari menu <b>Kelas</b>.</div>`}
+      ${sessionsToday.length > 3 ? `<button class="slink blocklink" data-nav="kelas">Lihat semua ${sessionsToday.length} sesi ${icon("chev", "w-3 h-3")}</button>` : ""}
     </div>
   </div>
 
@@ -300,7 +301,7 @@ function informasiPage() {
         <div class="search">${icon("search", "w-4 h-4")}<input id="q-info" placeholder="Cari nama santri..." value="${esc(S.infoQuery || "")}"></div>
         <button class="ghostbtn ${S.infoFilter === "belum" ? "on" : ""}" data-act="info-filter">${icon("sliders", "w-4 h-4")} Filter</button>
       </div>
-      ${list.length ? list.map(x => {
+      ${list.length ? list.slice(0, 5).map(x => {
         const st = attMap[x.id] === "hadir" ? ["ok", "Hadir"] : attMap[x.id] === "alpa" ? ["bad", "Alpa"] : attMap[x.id] ? ["warn", labelAbsen(attMap[x.id])] : ["", "Belum"];
         return `
       <div class="srow">
@@ -314,14 +315,15 @@ function informasiPage() {
         </span>
       </div>`;
       }).join("") : `<div class="notice">Tidak ada santri yang cocok.</div>`}
+      ${list.length > 5 ? `<button class="slink blocklink" data-kgoto="santri">Lihat semua ${sel.length} santri ${icon("chev", "w-3 h-3")}</button>` : ""}
       <button class="btn primary block" data-act="add-student" style="margin-top:12px">${icon("plus", "w-4 h-4")} Tambah Santri</button>
     </div>
   </div>
 
   <div class="sec">
     <div class="sh"><div class="st">Pengumuman TPQ</div><button class="act" data-kgoto="administrasi">Kelola</button></div>
-    ${anns.length ? anns.map(a => `
-      <div class="card" style="margin-bottom:8px">
+    ${anns.length ? `<div class="anngrid">` + anns.slice(0, 2).map(a => `
+      <div class="card">
         <div class="row-flat">
           <div class="av sm ic">${icon("flag", "w-4 h-4")}</div>
           <div class="rm">
@@ -330,7 +332,7 @@ function informasiPage() {
             <div class="rmeta">${fmtDate(a.date)}</div>
           </div>
         </div>
-      </div>`).join("") : `<div class="card notice">Belum ada pengumuman.</div>`}
+      </div>`).join("") + `</div>` : `<div class="card notice">Belum ada pengumuman.</div>`}
   </div>`;
 }
 /* =====================================================
