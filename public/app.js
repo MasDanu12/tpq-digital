@@ -139,6 +139,40 @@ function progressBar(label, pct, color) {
   </div>`;
 }
 
+function avColor(id) {
+  const cs = ["c1", "c2", "c3", "c4", "c5", "c6"];
+  let h = 0;
+  const s = String(id || "");
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 997;
+  return cs[h % cs.length];
+}
+
+function donut(pct, label) {
+  const C = 2 * Math.PI * 42;
+  const off = C * (1 - Math.min(100, Math.max(0, pct)) / 100);
+  return `
+  <div class="donut">
+    <svg viewBox="0 0 100 100">
+      <circle class="track" cx="50" cy="50" r="42"></circle>
+      <circle class="dc c-green" cx="50" cy="50" r="42" stroke-dasharray="${C.toFixed(1)}" stroke-dashoffset="${off.toFixed(1)}"></circle>
+    </svg>
+    <div class="donutc"><b>${pct}%</b><span>${esc(label)}</span></div>
+  </div>`;
+}
+
+function stat(ic, color, label, value, note) {
+  return `
+  <div class="stat">
+    <div class="shl"><span class="icbox ${color}">${icon(ic, "w-4 h-4")}</span>${label}</div>
+    <div class="shv">${value}</div>
+    ${note ? `<div class="shn">${note}</div>` : ""}
+  </div>`;
+}
+
+function cardHeader(title, extra) {
+  return `<div class="sh"><div class="st">${title}</div>${extra || ""}</div>`;
+}
+
 function isoDaysAgo(days) {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -165,29 +199,31 @@ function informasiPage() {
   const memori = getMemorization();
 
   return `
-  ${pageHead("Informasi", dayName(todayISO()) + ", " + fmtDate(todayISO()))}
-
   <div class="hero">
-    <div class="herorow">
-      <div>
-        <div class="hl">Santri Aktif</div>
-        <div class="hv">${aktif.length}</div>
-        <div class="hn">${count("Banin")} banin · ${count("Banat")} banat · ${count("Private")} private</div>
-      </div>
-      <div class="herochip">${icon("chart", "w-4 h-4")} ${pctHadir}% hadir</div>
-    </div>
+    <div class="hz"></div><div class="hz z2"></div>
+    <div class="hgreet">${esc(dayName(todayISO()))}, ${esc(fmtDate(todayISO()))}</div>
+    <h2>Assalamu'alaikum</h2>
+    <div class="hsub">${aktif.length} santri aktif • ${count("Banin")} banin • ${count("Banat")} banat • ${count("Private")} private</div>
+    <div class="hquote">"Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya."<b>— HR. Bukhari</b></div>
   </div>
 
   <div class="grid2">
+    ${stat("usergroup", "g", "Santri Aktif", aktif.length, count("Banin") + " banin • " + count("Banat") + " banat • " + count("Private") + " private")}
+    ${stat("book", "t", "Setoran Hari Ini", recToday.length, pctLancar + "% lancar")}
+  </div>
+
+  <div class="sec">
+    ${cardHeader("Kehadiran Hari Ini")}
     <div class="card">
-      <div class="sl">Kehadiran hari ini</div>
-      <div class="sv">${hadir}<span class="svs">/${aktif.length}</span></div>
-      <div class="rmeta">${attToday.filter(a => a.status === "izin").length} izin · ${attToday.filter(a => a.status === "sakit").length} sakit · ${attToday.filter(a => a.status === "alpa").length} alpa</div>
-    </div>
-    <div class="card">
-      <div class="sl">Setoran hari ini</div>
-      <div class="sv">${recToday.length}</div>
-      <div class="rmeta">${pctLancar}% lancar</div>
+      <div class="donutwrap">
+        ${donut(pctHadir, "hadir")}
+        <div class="legend">
+          <div class="li"><i style="background:var(--green)"></i>Hadir<b>${hadir}</b></div>
+          <div class="li"><i style="background:var(--blue)"></i>Izin<b>${attToday.filter(a => a.status === "izin").length}</b></div>
+          <div class="li"><i style="background:var(--orange)"></i>Sakit / Berhalangan<b>${attToday.filter(a => a.status === "sakit" || a.status === "berhalangan").length}</b></div>
+          <div class="li"><i style="background:var(--red)"></i>Alpa<b>${attToday.filter(a => a.status === "alpa").length}</b></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -206,7 +242,7 @@ function informasiPage() {
     ${lastRec ? `
     <div class="card" data-act="goto-kelas" role="button">
       <div class="row-flat">
-        <div class="av">${ini(lastRec.studentName)}</div>
+        <div class="av ${avColor(lastRec.studentId)}">${ini(lastRec.studentName)}</div>
         <div class="rm">
           <div class="rn">${esc(lastRec.studentName)}</div>
           <div class="rmeta">${esc(lastRec.kitab)}${lastRec.surah ? " — " + esc(lastRec.surah) : ""}${lastRec.page ? " · hlm. " + esc(lastRec.page) : ""} · ${fmtDate(lastRec.date)}</div>
@@ -231,7 +267,7 @@ function informasiPage() {
     <div class="sh"><div class="st">Jadwal & Sesi Hari Ini</div></div>
     ${sessionsToday.length ? sessionsToday.map(s => `
       <div class="card row-flat" style="margin-bottom:8px">
-        <div class="av sm">${icon("calendar", "w-4 h-4")}</div>
+        <div class="av sm ic">${icon("calendar", "w-4 h-4")}</div>
         <div class="rm">
           <div class="rn2">Kelas ${esc(s.group)}</div>
           <div class="rmeta">${fmtTime(s.startedAt)}${s.closedAt ? " – " + fmtTime(s.closedAt) : " – berjalan"} · ${s.finished.length} selesai</div>
@@ -246,7 +282,7 @@ function informasiPage() {
       ${acts.length ? acts.map(a => `
         <div class="ir">
           <div class="row-flat">
-            <div class="av sm">${icon(a.icon && a.icon.startsWith("fa-") ? "bell" : (a.icon || "bell"), "w-4 h-4")}</div>
+            <div class="av sm ic">${icon(a.icon && a.icon.startsWith("fa-") ? "bell" : (a.icon || "bell"), "w-4 h-4")}</div>
             <div class="rm"><div class="rn2">${esc(a.title)}</div><div class="rmeta">${esc(a.detail)}</div></div>
           </div>
           <span class="rmeta nowrap">${fmtDateTime(a.ts)}</span>
@@ -259,7 +295,7 @@ function informasiPage() {
     ${anns.length ? anns.map(a => `
       <div class="card" style="margin-bottom:8px">
         <div class="row-flat">
-          <div class="av sm">${icon("flag", "w-4 h-4")}</div>
+          <div class="av sm ic">${icon("flag", "w-4 h-4")}</div>
           <div class="rm">
             <div class="rn2">${esc(a.title)}</div>
             <div class="rmeta">${esc(a.body)}</div>
@@ -284,17 +320,16 @@ function kelasGroups() {
     ${GROUPS.map(g => {
       const active = activeStudents(g);
       const s = getActiveSession(g);
-      const status = s ? "berjalan" : "belum";
       const belum = s ? sessionAttendanceCount(g).belum : active.length;
       return `
-      <button class="gc" data-group="${g}">
-        <div class="dot ${status === "berjalan" ? "run" : status === "selesai" ? "done" : ""}"></div>
-        <div class="gn">${g}</div>
-        <div class="gcnt">${active.length} santri aktif</div>
-        <div class="gmeta">
-          ${s ? `<span class="badge warn">Sesi berjalan</span>` : `<span class="badge mute">Belum mulai</span>`}
+      <button class="gcard" data-group="${g}">
+        <div class="gdot ${s ? "run" : ""}"></div>
+        <div class="rm">
+          <div class="gname">${g}</div>
+          <div class="gsub">${active.length} santri aktif${s ? " • " + s.finished.length + " selesai • " + belum + " belum dipanggil" : ""}</div>
         </div>
-        <div class="gcnt">${s ? `${s.finished.length} selesai · ${belum} belum dipanggil` : ""}</div>
+        ${s ? `<span class="badge warn">Sesi berjalan</span>` : `<span class="badge mute">Belum mulai</span>`}
+        ${icon("chev", "chev w-4 h-4")}
       </button>`;
     }).join("")}
   </div>
@@ -309,7 +344,7 @@ function kelasGroups() {
 
 function studentList(list, opt) {
   const o = opt || {};
-  return list.length ? `<div class="list">${list.map(x => {
+  return list.length ? `<div class="card" style="padding:2px 14px">${list.map(x => {
     const sess = S.session;
     let chip = "";
     if (sess && sess.group === x.group) {
@@ -320,7 +355,7 @@ function studentList(list, opt) {
     }
     return `
     <div class="row" data-profile="${x.id}" role="button">
-      <div class="av">${ini(x.name)}</div>
+      <div class="av ${avColor(x.id)}">${ini(x.name)}</div>
       <div class="rm">
         <div class="rn">${esc(x.name)} ${x.status !== "aktif" ? '<span class="badge mute">Nonaktif</span>' : ""}</div>
         <div class="rmeta">${esc(x.level)} · ${esc(x.position || "-")}</div>
@@ -341,11 +376,17 @@ function sessionPage() {
   const belum = list.filter(x => !sess.called.includes(x.id) && !sess.finished.includes(x.id) && !((sess.absent || {})[x.id]));
   const next = belum[0];
   return `
-  ${pageHead("Kelas " + sess.group, "Sesi " + fmtTime(sess.startedAt) + " · " + sess.finished.length + " selesai, " + Object.keys(sess.absent || {}).length + " absen, " + belum.length + " belum dipanggil", "back-to-groups", "Kembali")}
+  ${pageHead("Kelas " + sess.group, "Sesi " + fmtTime(sess.startedAt), "back-to-groups", "Kembali")}
+
+  <div class="sestats">
+    <div class="cell"><b>${sess.finished.length}</b><span>Selesai</span></div>
+    <div class="cell"><b>${Object.keys(sess.absent || {}).length}</b><span>Absen</span></div>
+    <div class="cell hl"><b>${belum.length}</b><span>Belum dipanggil</span></div>
+  </div>
 
   ${next ? `<div class="card" style="margin-bottom:12px">
     <div class="row-flat">
-      <div class="av">${ini(next.name)}</div>
+      <div class="av ${avColor(next.id)}">${ini(next.name)}</div>
       <div class="rm">
         <div class="rn">Berikutnya: ${esc(next.name)}</div>
         <div class="rmeta">${esc(next.level)} · ${esc(next.position || "-")}</div>
@@ -368,7 +409,7 @@ function sessionPage() {
         return `
         <div class="card st-${st}" style="margin-bottom:8px">
           <div class="row-flat">
-            <div class="av ${st === "done" ? "ok" : st === "absent" ? "warn" : ""}">${ini(x.name)}</div>
+            <div class="av ${st === "done" ? "c1" : st === "absent" ? "c4" : avColor(x.id)}">${ini(x.name)}</div>
             <div class="rm">
               <div class="rn2">${esc(x.name)}</div>
               <div class="rmeta">${esc(x.level)} · ${esc(x.position || "-")}</div>
@@ -450,7 +491,7 @@ function profilePage() {
   <button class="back" data-act="back-profile">${icon("back", "w-4 h-4")} Kembali</button>
 
   <div class="phead">
-    <div class="pav">${ini(x.name)}</div>
+    <div class="pav av ${avColor(x.id)}" style="font-weight:800;font-size:18px">${ini(x.name)}</div>
     <div class="rm">
       <div class="pn">${esc(x.name)}</div>
       <div class="pm">${esc(x.gender)} · Grup ${esc(x.group)}</div>
@@ -580,7 +621,7 @@ function kantorGrid() {
     <div class="card">
       ${getActivity().slice(0, 5).map(a => `
       <div class="ir">
-        <div class="row-flat"><div class="av sm">${icon(a.icon && a.icon.startsWith("fa-") ? "bell" : (a.icon || "bell"), "w-4 h-4")}</div>
+        <div class="row-flat"><div class="av sm ic">${icon(a.icon && a.icon.startsWith("fa-") ? "bell" : (a.icon || "bell"), "w-4 h-4")}</div>
         <div class="rm"><div class="rn2">${esc(a.title)}</div><div class="rmeta">${esc(a.detail)}</div></div></div>
         <span class="rmeta nowrap">${fmtDateTime(a.ts)}</span>
       </div>`).join("") || `<div class="notice">Belum ada aktivitas.</div>`}
@@ -633,10 +674,10 @@ function kantorWali() {
     const kids = studentsOfGuardian(w.id);
     return `
     <div class="card" style="margin-bottom:8px">
-      <div class="row-flat">
-        <div class="av">${ini(w.name)}</div>
-        <div class="rm">
-          <div class="rn2">${esc(w.name)}</div>
+    <div class="row-flat">
+      <div class="av">${ini(w.name)}</div>
+      <div class="rm">
+        <div class="rn2">${esc(w.name)}</div>
           <div class="rmeta">${esc(w.relation || "Wali")}${w.wa ? " · " + esc(w.wa) : ""}</div>
           <div class="rmeta">Santri: ${kids.length ? kids.map(k => esc(k.name)).join(", ") : "-"}</div>
         </div>
@@ -762,7 +803,7 @@ function kantorAdministrasi() {
   ${list.length ? list.map(a => `
     <div class="card" style="margin-bottom:8px">
       <div class="row-flat">
-        <div class="av sm">${icon("flag", "w-4 h-4")}</div>
+        <div class="av sm ic">${icon("flag", "w-4 h-4")}</div>
         <div class="rm">
           <div class="rn2">${esc(a.title)}</div>
           <div class="rmeta">${esc(a.body)}</div>
