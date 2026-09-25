@@ -15,6 +15,9 @@ const S = {
   kantorFilter: "semua",
   raportStudentId: null,
   raportPeriod: "semester",
+  infoGroup: "Banin",
+  infoQuery: "",
+  infoFilter: "semua",
   modal: null,
   modalData: null,
   toast: "",
@@ -61,6 +64,7 @@ function icon(name, cls) {
     calendar: '<path d="M19 4h-1V2h-2v2H8V2H6v2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zm0 16H5V10h14v10zM5 8V6h14v2H5z"/>',
     flag: '<path d="M14.4 6L14 4H5v17h2v-7h5.6l.4 2h7V6h-5.6z"/>',
     chart: '<path d="M5 9.2h3V19H5V9.2zM10.6 5h2.8v14h-2.8V5zm5.6 8H19v6h-2.8v-6z"/>',
+    eye: '<path d="M12 4.5C7 4.5 2.7 8.6 1 12c1.7 3.4 6 7.5 11 7.5S21.3 15.4 23 12c-1.7-3.4-6-7.5-11-7.5zm0 12.5a5 5 0 110-10 5 5 0 010 10zm0-2.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z"/>',
   };
   return '<svg viewBox="0 0 24 24" fill="currentColor" class="' + c + '" aria-hidden="true">' + (P[name] || P.info) + '</svg>';
 }
@@ -181,112 +185,136 @@ function isoDaysAgo(days) {
 /* =====================================================
    1. INFORMASI
    ===================================================== */
+function statTile(tint, ic, label, value, note) {
+  return `
+  <div class="stat tint-${tint}">
+    <span class="bigico ${tint}">${icon(ic, "w-4 h-4")}</span>
+    <div class="sl">${label}</div>
+    <div class="sv">${value}</div>
+    <div class="shn">${note}</div>
+  </div>`;
+}
+
 function informasiPage() {
   const students = getStudents();
   const aktif = students.filter(x => x.status === "aktif");
   const count = g => aktif.filter(x => x.group === g).length;
   const attToday = attendanceToday();
-  const hadir = attToday.filter(a => a.status === "hadir").length;
-  const recToday = recordsToday();
-  const pctHadir = aktif.length ? Math.round(hadir / aktif.length * 100) : 0;
-  const lancar = recToday.filter(r => r.kelancaran === "lancar").length;
-  const pctLancar = recToday.length ? Math.round(lancar / recToday.length * 100) : 0;
-
-  const lastRec = getRecords()[0];
-  const sessionsToday = getSessions().filter(s => new Date(s.startedAt).toISOString().slice(0, 10) === todayISO());
-  const acts = getActivity().slice(0, 5);
   const anns = getAnnouncements().slice(0, 3);
-  const memori = getMemorization();
+  const grp = S.infoGroup || "Banin";
+  const sel = aktif.filter(x => x.group === grp);
+  const pct = (n, d) => d ? Math.round(n / d * 100) : 0;
+
+  const attMap = {};
+  attToday.forEach(a => { attMap[a.studentId] = a.status; });
+  const hadirSel = sel.filter(s => attMap[s.id] === "hadir").length;
+  const izinSakit = sel.filter(s => ["izin", "sakit", "berhalangan"].includes(attMap[s.id])).length;
+  const belumSel = Math.max(0, sel.length - hadirSel - izinSakit);
+
+  const sess = getActiveSession(grp);
+  const sessRec = sess ? getRecords().find(r => r.sessionRef === sess.id) : null;
+  const guru = getTeachers().find(t => t.active && (t.classes || "") === grp);
+
+  const sessionsToday = getSessions().filter(s => new Date(s.startedAt).toISOString().slice(0, 10) === todayISO());
+  const groupColor = { Banin: "var(--green)", Banat: "var(--pink)", Private: "var(--purple)" };
+  const gava = { Banin: "ga-g", Banat: "ga-pk", Private: "ga-pu" };
+
+  let list = sel.slice();
+  if (S.infoFilter === "belum") list = list.filter(x => attMap[x.id] !== "hadir");
+  const q = (S.infoQuery || "").toLowerCase();
+  if (q) list = list.filter(x => (x.name || "").toLowerCase().includes(q));
 
   return `
-  <div class="hero">
-    <div class="hz"></div><div class="hz z2"></div>
-    <div class="hgreet">${esc(dayName(todayISO()))}, ${esc(fmtDate(todayISO()))}</div>
-    <h2>Assalamu'alaikum</h2>
-    <div class="hsub">${aktif.length} santri aktif • ${count("Banin")} banin • ${count("Banat")} banat • ${count("Private")} private</div>
-    <div class="hquote">"Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya."<b>— HR. Bukhari</b></div>
+  <div class="titlerow">
+    <div>
+      <h1 class="title">Informasi</h1>
+      <p class="sub">Kelola kegiatan belajar &amp; kehadiran santri</p>
+    </div>
+    <div class="datechip">${icon("calendar", "w-4 h-4")} ${esc(dayName(todayISO()))}, ${esc(fmtDate(todayISO()))}</div>
   </div>
 
-  <div class="grid2">
-    ${stat("usergroup", "g", "Santri Aktif", aktif.length, count("Banin") + " banin • " + count("Banat") + " banat • " + count("Private") + " private")}
-    ${stat("book", "t", "Setoran Hari Ini", recToday.length, pctLancar + "% lancar")}
+  <div class="gtiles">
+    ${GROUPS.map(g => `
+    <button class="gtile ${grp === g ? "on" : ""}" data-ig="${g}">
+      <span class="gava ${gava[g]}">${icon("usergroup", "w-4 h-4")}</span>
+      <span><b>${g}</b><i>${count(g)} santri</i></span>
+    </button>`).join("")}
+    <button class="gtile more" data-nav="kelas">Lihat Semua ${icon("chev", "w-4 h-4")}</button>
+  </div>
+
+  <div class="stat4">
+    ${statTile("g", "user", "Santri Aktif", sel.length, grp + " • total " + aktif.length)}
+    ${statTile("b", "check", "Hadir Hari Ini", hadirSel, pct(hadirSel, sel.length) + "% dari total")}
+    ${statTile("o", "calendar", "Izin / Sakit", izinSakit, pct(izinSakit, sel.length) + "% dari total")}
+    ${statTile("p", "star", "Belum Hadir", belumSel, pct(belumSel, sel.length) + "% dari total")}
   </div>
 
   <div class="sec">
-    ${cardHeader("Kehadiran Hari Ini")}
     <div class="card">
-      <div class="donutwrap">
-        ${donut(pctHadir, "hadir")}
-        <div class="legend">
-          <div class="li"><i style="background:var(--green)"></i>Hadir<b>${hadir}</b></div>
-          <div class="li"><i style="background:var(--blue)"></i>Izin<b>${attToday.filter(a => a.status === "izin").length}</b></div>
-          <div class="li"><i style="background:var(--orange)"></i>Sakit / Berhalangan<b>${attToday.filter(a => a.status === "sakit" || a.status === "berhalangan").length}</b></div>
-          <div class="li"><i style="background:var(--red)"></i>Alpa<b>${attToday.filter(a => a.status === "alpa").length}</b></div>
-        </div>
+      <div class="sechead">
+        <span class="sic g">${icon("book", "w-4 h-4")}</span>
+        <b>Sesi Kelas Saat Ini</b>
+        ${sess ? `<span class="badge ok">Sedang Berlangsung</span>` : `<span class="badge mute">Tidak Ada Sesi</span>`}
       </div>
+      ${sess ? `
+      <div class="sesibody">
+        <div class="sgchip"><b>${esc(grp)}</b><i>${esc(fmtTime(sess.startedAt))} – ${sess.closedAt ? esc(fmtTime(sess.closedAt)) : "sekarang"}</i></div>
+        <div class="vr"></div>
+        <div class="sesikol"><i>Kitab</i><b>${sessRec ? esc(sessRec.kitab) + (sessRec.surah ? " — " + esc(sessRec.surah) : "") : "-"}</b><span>${sessRec && sessRec.page ? "Halaman " + esc(sessRec.page) : "Belum ada setoran"}</span></div>
+        <div class="vr"></div>
+        <div class="sesikol"><i>Pengajar</i><b>${guru ? esc(guru.name) : "-"}</b><span>Kelas ${esc(grp)}</span></div>
+      </div>` : `
+      <div class="notice">Belum ada sesi berjalan untuk ${esc(grp)}. Buka menu <b>Kelas</b> lalu tekan <b>Mulai Kelas</b>.</div>`}
     </div>
   </div>
 
   <div class="sec">
-    <div class="sh"><div class="st">Progress Pembelajaran</div></div>
     <div class="card">
-      ${progressBar("Kelancaran setoran hari ini", pctLancar, "emerald")}
-      ${progressBar("Kehadiran hari ini", pctHadir, "sky")}
-      <div class="ir"><span class="muted">Total catatan pembelajaran</span><b>${getRecords().length}</b></div>
-      <div class="ir"><span class="muted">Sesi kelas hari ini</span><b>${sessionsToday.length}</b></div>
-    </div>
-  </div>
-
-  <div class="sec">
-    <div class="sh"><div class="st">Pencapaian Terbaru</div></div>
-    ${lastRec ? `
-    <div class="card" data-act="goto-kelas" role="button">
-      <div class="row-flat">
-        <div class="av ${avColor(lastRec.studentId)}">${ini(lastRec.studentName)}</div>
-        <div class="rm">
-          <div class="rn">${esc(lastRec.studentName)}</div>
-          <div class="rmeta">${esc(lastRec.kitab)}${lastRec.surah ? " — " + esc(lastRec.surah) : ""}${lastRec.page ? " · hlm. " + esc(lastRec.page) : ""} · ${fmtDate(lastRec.date)}</div>
-          <div class="rmeta kel ${lastRec.kelancaran === "lancar" ? "ok" : ""}">${esc(lastRec.kelancaran || "")}</div>
-        </div>
+      <div class="sechead">
+        <span class="sic b">${icon("calendar", "w-4 h-4")}</span>
+        <b>Jadwal Kelas Hari Ini</b>
+        <button class="slink" data-nav="kelas">Lihat Semua</button>
       </div>
-    </div>` : `<div class="card notice">Belum ada pencapaian. Mulai kelas di menu <b>Kelas</b> untuk mencatat setoran pertama.</div>`}
-  </div>
-
-  <div class="sec">
-    <div class="sh"><div class="st">Progress Hafalan</div><button class="act" data-kgoto="hafalan">Kelola</button></div>
-    <div class="card">
-      ${memori.length ? memori.map(m => {
-        const done = getRecords().filter(r => r.hafalanId === m.id).length;
-        const pct = m.total ? Math.min(100, Math.round(done / m.total * 100)) : 0;
-        return progressBar(esc(m.name) + " (" + done + "/" + m.total + " " + esc(m.unit || "") + ")", pct, "rose");
-      }).join("") : `<div class="notice">Belum ada materi hafalan. Tambahkan di Kantor → Data Hafalan.</div>`}
+      ${sessionsToday.length ? sessionsToday.map(s => {
+        const rec = getRecords().find(r => r.sessionRef === s.id);
+        return `
+      <div class="schedrow">
+        <i class="sdot" style="background:${groupColor[s.group] || "#cbd5e1"}"></i>
+        <span class="stime">${esc(fmtTime(s.startedAt))} – ${s.closedAt ? esc(fmtTime(s.closedAt)) : "sekarang"}</span>
+        <b>${esc(s.group)}</b>
+        <span class="skitab">${esc(rec ? rec.kitab : "-")}</span>
+        <span class="badge ${s.status === "berjalan" ? "ok" : "mute"}">${s.status === "berjalan" ? "Sedang Berlangsung" : "Selesai"}</span>
+      </div>`;
+      }).join("") : `<div class="notice">Belum ada jadwal/sesi hari ini. Mulai kelas dari menu <b>Kelas</b>.</div>`}
     </div>
   </div>
 
   <div class="sec">
-    <div class="sh"><div class="st">Jadwal & Sesi Hari Ini</div></div>
-    ${sessionsToday.length ? sessionsToday.map(s => `
-      <div class="card row-flat" style="margin-bottom:8px">
-        <div class="av sm ic">${icon("calendar", "w-4 h-4")}</div>
-        <div class="rm">
-          <div class="rn2">Kelas ${esc(s.group)}</div>
-          <div class="rmeta">${fmtTime(s.startedAt)}${s.closedAt ? " – " + fmtTime(s.closedAt) : " – berjalan"} · ${s.finished.length} selesai</div>
-        </div>
-        <span class="badge ${s.status === "berjalan" ? "warn" : ""}">${s.status === "berjalan" ? "Berjalan" : "Selesai"}</span>
-      </div>`).join("") : `<div class="card notice">Belum ada sesi kelas hari ini. Buka menu <b>Kelas</b> lalu tekan <b>Mulai Kelas</b>.</div>`}
-  </div>
-
-  <div class="sec">
-    <div class="sh"><div class="st">Aktivitas Terbaru</div></div>
     <div class="card">
-      ${acts.length ? acts.map(a => `
-        <div class="ir">
-          <div class="row-flat">
-            <div class="av sm ic">${icon(a.icon && a.icon.startsWith("fa-") ? "bell" : (a.icon || "bell"), "w-4 h-4")}</div>
-            <div class="rm"><div class="rn2">${esc(a.title)}</div><div class="rmeta">${esc(a.detail)}</div></div>
-          </div>
-          <span class="rmeta nowrap">${fmtDateTime(a.ts)}</span>
-        </div>`).join("") : `<div class="notice">Belum ada aktivitas.</div>`}
+      <div class="sechead">
+        <span class="sic p">${icon("usergroup", "w-4 h-4")}</span>
+        <b>Daftar Santri (${esc(grp)})</b>
+        <button class="slink" data-kgoto="santri">Lihat Semua</button>
+      </div>
+      <div class="inforow">
+        <div class="search">${icon("search", "w-4 h-4")}<input id="q-info" placeholder="Cari nama santri..." value="${esc(S.infoQuery || "")}"></div>
+        <button class="ghostbtn ${S.infoFilter === "belum" ? "on" : ""}" data-act="info-filter">${icon("sliders", "w-4 h-4")} Filter</button>
+      </div>
+      ${list.length ? list.map(x => {
+        const st = attMap[x.id] === "hadir" ? ["ok", "Hadir"] : attMap[x.id] === "alpa" ? ["bad", "Alpa"] : attMap[x.id] ? ["warn", labelAbsen(attMap[x.id])] : ["", "Belum"];
+        return `
+      <div class="srow">
+        <div class="av ${avColor(x.id)}">${ini(x.name)}</div>
+        <div class="rm"><b>${esc(x.name)}</b><i>${esc(x.level || "-")} • Kelas ${esc(x.group)}</i></div>
+        <span class="ast ${st[0]}"><i></i>${st[1]}</span>
+        <span class="sacts">
+          <button data-act="open-student" data-id="${x.id}" title="Lihat">${icon("eye", "w-4 h-4")}</button>
+          <button data-act="edit-student" data-id="${x.id}" title="Edit">${icon("edit", "w-4 h-4")}</button>
+          <button class="danger" data-act="delete-student" data-id="${x.id}" title="Hapus">${icon("trash", "w-4 h-4")}</button>
+        </span>
+      </div>`;
+      }).join("") : `<div class="notice">Tidak ada santri yang cocok.</div>`}
+      <button class="btn primary block" data-act="add-student" style="margin-top:12px">${icon("plus", "w-4 h-4")} Tambah Santri</button>
     </div>
   </div>
 
@@ -1184,6 +1212,15 @@ function bind() {
   });
 
   $$("[data-sg]").forEach(b => b.onclick = () => { S.group = b.dataset.sg; render(); });
+  $$("[data-ig]").forEach(b => b.onclick = () => { S.infoGroup = b.dataset.ig; S.infoQuery = ""; render(); });
+  const qInfo = $("#q-info");
+  if (qInfo) qInfo.oninput = debounce(() => {
+    S.infoQuery = qInfo.value;
+    const pos = qInfo.selectionStart;
+    render();
+    const nq = $("#q-info");
+    if (nq) { nq.focus(); nq.setSelectionRange(pos, pos); }
+  }, 250);
 
   $$("[data-group]").forEach(b => b.onclick = () => {
     S.group = b.dataset.group;
@@ -1433,6 +1470,9 @@ function act(a, btn) {
     }
     case "goto-backup": S.modal = null; S.page = "kantor"; S.kantorView = "backup"; render(); break;
     case "add-student": S.modal = "student-form"; S.modalData = null; render(); break;
+    case "info-filter": S.infoFilter = S.infoFilter === "semua" ? "belum" : "semua"; render(); break;
+    case "open-student": S.profileId = btn.dataset.id; S.profileTab = "pembelajaran"; S.page = "kelas"; render(); break;
+    case "edit-student": S.modal = "student-form"; S.modalData = { id: btn.dataset.id }; render(); break;
     case "add-guardian": S.modal = "guardian-form"; S.modalData = null; render(); break;
     case "add-teacher": S.modal = "teacher-form"; S.modalData = null; render(); break;
     case "add-book": S.modal = "book-form"; S.modalData = null; render(); break;
