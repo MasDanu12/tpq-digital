@@ -1,22 +1,582 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#16a34a">
-  <meta name="description" content="Aplikasi manajemen TPQ: informasi, kelas, kantor, dan raport santri.">
-  <link rel="manifest" href="/manifest.json">
-  <link rel="icon" type="image/png" href="/icon-192.png">
-  <link rel="apple-touch-icon" href="/icon-192.png">
-  <title>TPQ Nurul Hidayah — Manajemen TPQ</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TPQ Nurul Hidayah</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0f2440; --soft:#64748b; --paper:#f4f7f6; --line:#e6ebe8;
+    --g:#16a34a; --g-dk:#0d5c37; --g-bg:#e8f7ee;
+    --blue:#2563eb; --blue-bg:#e3ecfd;
+    --orange:#d97706; --orange-bg:#fdf0dc;
+    --purple:#7c3aed; --purple-bg:#f0e9fd;
+    --pink:#db2777; --pink-bg:#fce4ef;
+    --amber-bg:#fef3c7; --amber-tx:#92600a;
+    box-sizing:border-box; padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  }
+  html{scroll-padding-top:env(safe-area-inset-top,0px);}
+  body{background:var(--paper); font-family:'Inter',sans-serif; color:var(--ink);}
+  h1,h2,h3,.display{font-family:'Plus Jakarta Sans',sans-serif;}
+  ::-webkit-scrollbar{width:6px;height:6px;} ::-webkit-scrollbar-thumb{background:#cfd8d4;border-radius:4px;}
+  .card{background:#fff;border:1px solid var(--line);border-radius:16px;}
+  .field{border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:12.5px;width:100%;outline:none;background:#fff;}
+  .field:focus{border-color:var(--g);box-shadow:0 0 0 2px rgba(22,163,74,.12);}
+  .iconbox{width:38px;height:38px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 2px;font-size:10.5px;font-weight:600;color:#94a3ab;}
+  .navbtn.active{color:var(--g);}
+  .pill{padding:9px 0;text-align:center;border-radius:11px;font-weight:700;font-size:12.5px;flex:1;}
+  .pill.active{background:var(--g);color:#fff;}
+  .pill:not(.active){background:#fff;border:1px solid var(--line);color:#64748b;}
+  .statuspill{font-size:10px;font-weight:700;padding:4px 9px;border-radius:999px;white-space:nowrap;}
+  .avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;}
+  .hidden-sec{display:none;}
+</style>
 </head>
-<body>
-  <div id="app"></div>
-  <script src="/store.js"></script>
-  <script src="/app.js"></script>
+<body class="min-h-screen pb-20">
+
+  <!-- HEADER -->
+  <header class="bg-white border-b border-[var(--line)] sticky top-0 z-30" style="padding-top:env(safe-area-inset-top,0px)">
+    <div class="max-w-3xl mx-auto px-3.5 py-2.5 flex items-center gap-2.5">
+      <div class="w-10 h-10 rounded-xl bg-[var(--g)] text-white flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-mosque"></i></div>
+      <div class="flex-1 min-w-0">
+        <h1 class="font-bold text-[13.5px] leading-tight truncate">TPQ Nurul Hidayah</h1>
+        <p class="text-[10px] text-[var(--soft)] truncate">Membentuk Generasi Qur'ani</p>
+      </div>
+      <button onclick="alert('Pengaturan TPQ ada di tab Kantor')" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[13px]"><i class="fa-solid fa-gear"></i></button>
+      <button onclick="alert('Halaman Profil akun — segera hadir')" class="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 text-[13px]"><i class="fa-solid fa-user"></i></button>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-3 pt-3">
+
+  <!-- =================== TAB: INFORMASI =================== -->
+  <section id="tab-informasi" class="space-y-3">
+
+    <div class="rounded-2xl p-4 relative overflow-hidden" style="background:linear-gradient(135deg,var(--g-bg),#f7fbf5)">
+      <p class="text-[12px] text-[var(--g-dk)] font-semibold">Assalamu'alaikum</p>
+      <h2 class="font-extrabold text-[20px] text-[var(--g-dk)] mt-0.5">Selamat Datang</h2>
+      <p class="text-[11.5px] text-[var(--soft)] mt-0.5">Di sistem informasi TPQ Nurul Hidayah</p>
+      <p class="text-[10.5px] italic text-[var(--g-dk)]/70 mt-3 max-w-[70%]">"Sebaik-baik kalian adalah yang belajar Al-Qur'an dan mengajarkannya." <span class="not-italic font-semibold">(HR. Bukhari)</span></p>
+      <i class="fa-solid fa-mosque text-[80px] text-[var(--g)]/10 absolute -right-2 -bottom-3"></i>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2.5">
+      <div class="card p-3">
+        <div class="iconbox bg-[var(--g-bg)] text-[var(--g)] mb-2"><i class="fa-solid fa-users"></i></div>
+        <p class="text-[11px] text-[var(--soft)] font-medium">Total Santri</p>
+        <p class="font-extrabold text-[19px]" id="info-total-santri">–</p>
+        <p class="text-[9.5px] text-[var(--soft)] mt-0.5" id="info-per-kelompok">Memuat...</p>
+      </div>
+      <div class="card p-3">
+        <div class="iconbox bg-[var(--blue-bg)] text-[var(--blue)] mb-2"><i class="fa-regular fa-calendar-check"></i></div>
+        <p class="text-[11px] text-[var(--soft)] font-medium">Hadir Hari Ini</p>
+        <p class="font-extrabold text-[19px]">38</p>
+        <p class="text-[9.5px] text-[var(--soft)] mt-0.5">84% dari total santri</p>
+      </div>
+      <div class="card p-3">
+        <div class="iconbox bg-[var(--orange-bg)] text-[var(--orange)] mb-2"><i class="fa-solid fa-book-open"></i></div>
+        <p class="text-[11px] text-[var(--soft)] font-medium">Santri Aktif</p>
+        <p class="font-extrabold text-[19px]">42</p>
+        <p class="text-[9.5px] text-[var(--soft)] mt-0.5">93% dari total santri</p>
+      </div>
+      <div class="card p-3">
+        <div class="iconbox bg-[var(--purple-bg)] text-[var(--purple)] mb-2"><i class="fa-solid fa-star"></i></div>
+        <p class="text-[11px] text-[var(--soft)] font-medium">Santri Baru</p>
+        <p class="font-extrabold text-[19px]">3</p>
+        <p class="text-[9.5px] text-[var(--soft)] mt-0.5">Bulan ini</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2.5"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-regular fa-calendar text-[var(--g)]"></i> Kehadiran Hari Ini</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Detail ›</span></div>
+        <div class="flex items-center gap-4">
+          <div class="w-24 h-24 rounded-full shrink-0 grid place-items-center" style="background:conic-gradient(var(--g) 0% 84%, #fde68a 84% 93%, #fca5a5 93% 98%, #cbd5e1 98% 100%)">
+            <div class="w-16 h-16 rounded-full bg-white grid place-items-center"><div><p class="font-extrabold text-[16px] text-center leading-none">84%</p><p class="text-[8.5px] text-[var(--soft)] text-center">Hadir</p></div></div>
+          </div>
+          <div class="text-[11px] space-y-1.5 flex-1">
+            <div class="flex justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[6px] text-[var(--g)]"></i>Hadir</span><b>38</b></div>
+            <div class="flex justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[6px]" style="color:#fde68a"></i>Izin</span><b>4</b></div>
+            <div class="flex justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[6px]" style="color:#fca5a5"></i>Sakit</span><b>2</b></div>
+            <div class="flex justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[6px] text-slate-400"></i>Berhalangan</span><b>1</b></div>
+            <div class="flex justify-between"><span class="flex items-center gap-1.5"><i class="fa-solid fa-circle text-[6px] text-slate-300"></i>Belum Diproses</span><b>0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2.5"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-[var(--g)]"></i> Progress Pembelajaran</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Detail ›</span></div>
+        <div id="progress-jenjang" class="space-y-2.5 text-[11px]"></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-solid fa-trophy text-amber-500"></i> Pencapaian Terbaru</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Semua ›</span></div>
+        <div id="list-pencapaian" class="divide-y divide-[var(--line)]"></div>
+      </div>
+
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2.5"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-solid fa-book-quran text-[var(--g)]"></i> Hafalan</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Detail ›</span></div>
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div class="bg-[var(--g-bg)] rounded-xl p-2"><i class="fa-solid fa-book text-[var(--g)] text-[13px]"></i><p class="font-extrabold text-[15px] mt-1">18</p><p class="text-[9px] text-[var(--soft)]">Surat</p></div>
+          <div class="bg-[var(--blue-bg)] rounded-xl p-2"><i class="fa-solid fa-hands-praying text-[var(--blue)] text-[13px]"></i><p class="font-extrabold text-[15px] mt-1">15</p><p class="text-[9px] text-[var(--soft)]">Doa</p></div>
+          <div class="bg-[var(--purple-bg)] rounded-xl p-2"><i class="fa-solid fa-scroll text-[var(--purple)] text-[13px]"></i><p class="font-extrabold text-[15px] mt-1">12</p><p class="text-[9px] text-[var(--soft)]">Hadis</p></div>
+        </div>
+        <p class="text-[10.5px] font-semibold mb-1">Progress Hafalan Bulan Ini</p>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full bg-[var(--g)] rounded-full" style="width:72%"></div></div>
+        <p class="text-right text-[10px] text-[var(--soft)] mt-1">72%</p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-regular fa-calendar-days text-[var(--g)]"></i> Jadwal Hari Ini</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Semua ›</span></div>
+        <div id="list-jadwal" class="divide-y divide-[var(--line)]"></div>
+      </div>
+
+      <div class="card p-3.5">
+        <h3 class="font-bold text-[12.5px] flex items-center gap-1.5 mb-0.5"><i class="fa-solid fa-layer-group text-[var(--g)]"></i> Data Pembelajaran</h3>
+        <p class="text-[10px] text-[var(--soft)] mb-2.5">Kelola data master pembelajaran</p>
+        <div class="grid grid-cols-3 gap-1.5 text-center">
+          <button onclick="gantiTab('kantor')" class="bg-[var(--g-bg)] rounded-xl p-2"><i class="fa-solid fa-users text-[var(--g)] block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Santri</span></button>
+          <button onclick="gantiTab('kantor')" class="bg-[var(--blue-bg)] rounded-xl p-2"><i class="fa-solid fa-book text-[var(--blue)] block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Kitab</span></button>
+          <button onclick="gantiTab('kantor')" class="bg-[var(--pink-bg)] rounded-xl p-2"><i class="fa-regular fa-calendar text-[var(--pink)] block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Jadwal</span></button>
+          <button onclick="gantiTab('kantor')" class="bg-[var(--orange-bg)] rounded-xl p-2"><i class="fa-solid fa-hands-praying text-[var(--orange)] block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Doa</span></button>
+          <button onclick="gantiTab('kantor')" class="bg-[var(--purple-bg)] rounded-xl p-2"><i class="fa-solid fa-scroll text-[var(--purple)] block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Hadis</span></button>
+          <button onclick="gantiTab('kantor')" class="bg-rose-50 rounded-xl p-2"><i class="fa-solid fa-book-quran text-rose-500 block mb-1 text-[13px]"></i><span class="text-[9.5px] font-bold">Surat</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-3.5 mb-3">
+      <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-regular fa-clock text-[var(--g)]"></i> Aktivitas Terbaru</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Semua ›</span></div>
+      <div id="list-aktivitas" class="space-y-2.5"></div>
+    </div>
+  </section>
+
+  <!-- =================== TAB: KELAS =================== -->
+  <section id="tab-kelas" class="hidden-sec space-y-3">
+
+    <div id="kelas-list-view" class="space-y-3">
+      <div>
+        <h2 class="font-extrabold text-[18px]">Ruang Kelas</h2>
+        <p class="text-[11px] text-[var(--soft)]">Kelola kegiatan belajar mengajar dan kehadiran santri</p>
+      </div>
+
+      <div class="flex gap-2">
+        <button onclick="pilihKelompok('BANIN')" id="pill-banin" class="pill">Banin</button>
+        <button onclick="pilihKelompok('BANAT')" id="pill-banat" class="pill">Banat</button>
+        <button onclick="pilihKelompok('PRIVAT')" id="pill-privat" class="pill">Privat</button>
+      </div>
+
+      <div class="card p-3.5">
+        <div class="flex justify-between items-center mb-2.5">
+          <h3 class="font-bold text-[12.5px]">Sesi Hari Ini</h3>
+          <span class="text-[10.5px] bg-slate-100 px-2.5 py-1 rounded-full font-semibold flex items-center gap-1"><i class="fa-regular fa-calendar text-[10px]"></i> <span id="tgl-hari-ini"></span></span>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center mb-3">
+          <div class="bg-[var(--g-bg)] rounded-xl p-2"><p class="text-[9px] text-[var(--soft)] font-semibold">Total Santri</p><p id="sesi-total" class="font-extrabold text-[16px]">0</p></div>
+          <div class="bg-[var(--amber-bg)] rounded-xl p-2"><p class="text-[9px] text-[var(--amber-tx)] font-semibold">Belum Dipanggil</p><p id="sesi-belum" class="font-extrabold text-[16px]">0</p></div>
+          <div class="bg-[var(--g-bg)] rounded-xl p-2"><p class="text-[9px] text-[var(--soft)] font-semibold">Selesai</p><p id="sesi-selesai" class="font-extrabold text-[16px]">0</p></div>
+        </div>
+        <button onclick="mulaiKelas()" class="w-full bg-[var(--g)] text-white py-2.5 rounded-xl font-bold text-[13px] flex items-center justify-center gap-2"><i class="fa-solid fa-play"></i> Mulai Kelas</button>
+      </div>
+
+      <div class="flex justify-between items-center">
+        <h3 class="font-bold text-[13px]" id="daftar-santri-title">Daftar Santri</h3>
+        <button class="text-[11px] font-semibold text-[var(--soft)] border border-[var(--line)] rounded-lg px-2.5 py-1.5 flex items-center gap-1"><i class="fa-solid fa-filter"></i> Filter</button>
+      </div>
+      <div id="list-santri-kelas" class="space-y-2"></div>
+    </div>
+
+    <!-- DETAIL: MULAI KELAS -->
+    <div id="kelas-detail-view" class="hidden-sec space-y-3">
+      <div class="flex justify-between items-center">
+        <div class="flex items-center gap-2">
+          <button onclick="tutupDetailKelas()" class="text-[16px]"><i class="fa-solid fa-arrow-left"></i></button>
+          <div><h2 class="font-extrabold text-[15px] leading-tight">Mulai Kelas</h2><p class="text-[10.5px] text-[var(--soft)]" id="detail-subtitle">Sesi</p></div>
+        </div>
+        <button class="text-[10.5px] font-bold border border-[var(--g)] text-[var(--g)] rounded-full px-3 py-1.5 flex items-center gap-1"><i class="fa-solid fa-stop"></i> Tutup Sesi</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="card p-2"><p class="text-[9px] text-[var(--soft)] font-semibold">Total Santri</p><p id="d-total" class="font-extrabold text-[16px]">0</p></div>
+        <div class="card p-2"><p class="text-[9px] text-[var(--amber-tx)] font-semibold">Belum Dipanggil</p><p id="d-belum" class="font-extrabold text-[16px]">0</p></div>
+        <div class="card p-2"><p class="text-[9px] text-[var(--soft)] font-semibold">Selesai</p><p id="d-selesai" class="font-extrabold text-[16px]">0</p></div>
+      </div>
+
+      <div class="card p-3.5">
+        <div class="flex justify-between items-start mb-2.5">
+          <div class="flex items-center gap-2.5">
+            <div class="avatar" id="d-avatar" style="background:var(--g)"></div>
+            <div><p class="font-bold text-[13.5px]" id="d-nama"></p><p class="text-[10.5px] text-[var(--soft)]" id="d-jenjang-hal"></p></div>
+          </div>
+          <span class="statuspill bg-[var(--g-bg)] text-[var(--g)]"><i class="fa-solid fa-arrows-rotate text-[9px] mr-1"></i>Dalam Proses</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5 mb-3 text-[10.5px]">
+          <div class="border border-[var(--line)] rounded-lg py-1.5 text-center font-semibold" id="d-kelompok"></div>
+          <div class="border border-[var(--line)] rounded-lg py-1.5 text-center font-semibold" id="d-jenjang"></div>
+          <div class="border border-[var(--line)] rounded-lg py-1.5 text-center font-semibold" id="d-hal"></div>
+        </div>
+        <button onclick="hadirMulaiSetoran()" class="w-full bg-[var(--g)] text-white py-2.5 rounded-xl font-bold text-[12.5px] flex items-center justify-center gap-2"><i class="fa-solid fa-check"></i> Hadir & Mulai Setoran</button>
+      </div>
+
+      <div class="card p-3.5 space-y-3">
+        <h3 class="font-bold text-[13px]">Pencatatan Pembelajaran</h3>
+        <div class="grid grid-cols-2 gap-2.5">
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Tanggal</label><input type="date" id="f-tanggal" class="field mt-1"></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Kitab</label><select id="f-kitab" class="field mt-1"></select></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Surah</label><select id="f-surah" class="field mt-1"></select></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Halaman</label><select id="f-halaman" class="field mt-1"></select></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Baris Halaman</label><input type="text" id="f-baris" placeholder="Contoh: 1-5" class="field mt-1"></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Kelancaran</label><input type="text" id="f-kelancaran" placeholder="Contoh: Lancar / Cukup / Kurang" class="field mt-1"></div>
+          <div><label class="text-[10px] font-bold text-[var(--soft)]">Paraf Guru</label><select id="f-guru" class="field mt-1"></select></div>
+          <div>
+            <label class="text-[10px] font-bold text-[var(--soft)]">Keterangan</label>
+            <textarea id="f-keterangan" maxlength="500" rows="3" placeholder="Tulis keterangan perkembangan anak..." class="field mt-1"></textarea>
+            <p class="text-right text-[9px] text-[var(--soft)]" id="f-count">0/500</p>
+          </div>
+        </div>
+
+        <button onclick="draftAI()" class="w-full bg-[var(--g-bg)] text-[var(--g-dk)] rounded-xl p-3 flex items-center justify-between text-left">
+          <span class="flex items-center gap-2 text-[11.5px] font-bold"><i class="fa-solid fa-wand-magic-sparkles"></i> Bantu AI <span class="bg-[var(--g)] text-white text-[8px] px-1.5 py-0.5 rounded-full">Beta</span></span>
+          <i class="fa-solid fa-chevron-right text-[11px]"></i>
+        </button>
+        <p class="text-[9.5px] text-[var(--soft)] -mt-2 ml-1">Buat draft keterangan dari data yang sudah diisi</p>
+
+        <div class="flex gap-2 pt-1">
+          <button onclick="resetForm()" class="flex-1 border border-[var(--line)] rounded-xl py-2.5 font-bold text-[12.5px] flex items-center justify-center gap-2"><i class="fa-solid fa-rotate-left"></i> Reset</button>
+          <button onclick="simpanPembelajaran()" class="flex-1 bg-[var(--g)] text-white rounded-xl py-2.5 font-bold text-[12.5px] flex items-center justify-center gap-2"><i class="fa-solid fa-floppy-disk"></i> Simpan</button>
+        </div>
+
+        <div class="flex items-center justify-center gap-3 pt-2 text-[9.5px] font-bold text-[var(--soft)]">
+          <span class="flex flex-col items-center gap-1"><span class="w-6 h-6 rounded-full bg-[var(--g)] text-white grid place-items-center">1</span>Isi Data</span>
+          <span class="w-8 h-px bg-[var(--line)]"></span>
+          <span class="flex flex-col items-center gap-1"><span class="w-6 h-6 rounded-full bg-slate-200 grid place-items-center">2</span>Setor & Catat</span>
+          <span class="w-8 h-px bg-[var(--line)]"></span>
+          <span class="flex flex-col items-center gap-1"><span class="w-6 h-6 rounded-full bg-slate-200 grid place-items-center">3</span>Simpan</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =================== TAB: KANTOR =================== -->
+  <section id="tab-kantor" class="hidden-sec space-y-3 pb-3">
+    <div>
+      <h2 class="font-extrabold text-[18px]">Kantor</h2>
+      <p class="text-[11px] text-[var(--soft)]">Kelola data dan administrasi TPQ dengan mudah</p>
+    </div>
+
+    <div class="grid grid-cols-2 gap-2.5">
+      <button class="card p-3 text-left" onclick="stubKantor('Data Santri')"><div class="iconbox bg-[var(--g-bg)] text-[var(--g)] mb-2"><i class="fa-solid fa-users"></i></div><p class="font-bold text-[12px]">Data Santri ›</p><p class="text-[10px] text-[var(--soft)]">18 santri</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Data Wali')"><div class="iconbox bg-[var(--blue-bg)] text-[var(--blue)] mb-2"><i class="fa-solid fa-user-group"></i></div><p class="font-bold text-[12px]">Data Wali ›</p><p class="text-[10px] text-[var(--soft)]">16 wali</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Data Pengajar')"><div class="iconbox bg-[var(--purple-bg)] text-[var(--purple)] mb-2"><i class="fa-solid fa-user-tie"></i></div><p class="font-bold text-[12px]">Data Pengajar ›</p><p class="text-[10px] text-[var(--soft)]">3 pengajar</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Data Kitab / Materi')"><div class="iconbox bg-[var(--orange-bg)] text-[var(--orange)] mb-2"><i class="fa-solid fa-book-open"></i></div><p class="font-bold text-[12px]">Data Kitab / Materi ›</p><p class="text-[10px] text-[var(--soft)]">12 kitab</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Data Hafalan')"><div class="iconbox bg-[var(--pink-bg)] text-[var(--pink)] mb-2"><i class="fa-solid fa-book"></i></div><p class="font-bold text-[12px]">Data Hafalan ›</p><p class="text-[10px] text-[var(--soft)]">8 santri</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Pengaturan TPQ')"><div class="iconbox bg-[var(--g-bg)] text-[var(--g)] mb-2"><i class="fa-solid fa-gear"></i></div><p class="font-bold text-[12px]">Pengaturan TPQ ›</p><p class="text-[10px] text-[var(--soft)]">Profil & Jadwal</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Backup & Restore')"><div class="iconbox bg-[var(--purple-bg)] text-[var(--purple)] mb-2"><i class="fa-solid fa-database"></i></div><p class="font-bold text-[12px]">Backup & Restore ›</p><p class="text-[10px] text-[var(--soft)]">Data aman</p></button>
+      <button class="card p-3 text-left" onclick="stubKantor('Administrasi Lainnya')"><div class="iconbox bg-slate-100 text-slate-500 mb-2"><i class="fa-solid fa-file-lines"></i></div><p class="font-bold text-[12px]">Administrasi Lainnya ›</p><p class="text-[10px] text-[var(--soft)]">Surat & Dokumen</p></button>
+    </div>
+
+    <div class="card p-3.5">
+      <div class="flex justify-between items-center mb-2.5"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-solid fa-chart-simple text-[var(--g)]"></i> Ringkasan Data</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Semua ›</span></div>
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div class="bg-[var(--g-bg)] rounded-xl p-2"><p class="font-extrabold text-[15px]">18</p><p class="text-[8.5px] text-[var(--soft)]">Total Santri</p></div>
+        <div class="bg-[var(--blue-bg)] rounded-xl p-2"><p class="font-extrabold text-[15px]">16</p><p class="text-[8.5px] text-[var(--soft)]">Total Wali</p></div>
+        <div class="bg-[var(--purple-bg)] rounded-xl p-2"><p class="font-extrabold text-[15px]">3</p><p class="text-[8.5px] text-[var(--soft)]">Total Pengajar</p></div>
+        <div class="bg-[var(--orange-bg)] rounded-xl p-2"><p class="font-extrabold text-[15px]">12</p><p class="text-[8.5px] text-[var(--soft)]">Total Kitab</p></div>
+      </div>
+    </div>
+
+    <div class="card p-3.5">
+      <div class="flex justify-between items-center mb-2"><h3 class="font-bold text-[12.5px] flex items-center gap-1.5"><i class="fa-regular fa-clock text-[var(--g)]"></i> Aktivitas Terbaru</h3><span class="text-[10.5px] text-[var(--blue)] font-semibold">Lihat Semua ›</span></div>
+      <div id="list-aktivitas-kantor" class="divide-y divide-[var(--line)]"></div>
+    </div>
+  </section>
+
+  <!-- =================== TAB: RAPORT (placeholder) =================== -->
+  <section id="tab-raport" class="hidden-sec">
+    <div class="card p-6 text-center text-[var(--soft)] text-[12.5px] mt-6">
+      <i class="fa-solid fa-file-lines text-2xl mb-2 block"></i>
+      Halaman Raport belum dibangun — menyusul di tahap berikutnya.
+    </div>
+  </section>
+
+  </main>
+
+  <!-- BOTTOM NAV -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-[var(--line)] z-30" style="padding-bottom:env(safe-area-inset-bottom,0px)">
+    <div class="max-w-3xl mx-auto flex">
+      <button onclick="gantiTab('informasi')" id="nav-informasi" class="navbtn"><i class="fa-solid fa-house text-[16px]"></i>Informasi</button>
+      <button onclick="gantiTab('kelas')" id="nav-kelas" class="navbtn"><i class="fa-solid fa-people-group text-[16px]"></i>Kelas</button>
+      <button onclick="gantiTab('kantor')" id="nav-kantor" class="navbtn"><i class="fa-solid fa-building text-[16px]"></i>Kantor</button>
+      <button onclick="gantiTab('raport')" id="nav-raport" class="navbtn"><i class="fa-solid fa-file-lines text-[16px]"></i>Raport</button>
+    </div>
+  </nav>
+
+<script>
+// ===== KONFIGURASI WORKER (ISI SETELAH DEPLOY) =====
+const WORKER_URL = 'https://tpq-v2-api.NAMA-SUBDOMAIN-KAMU.workers.dev';
+const APP_KEY = 'GANTI_DENGAN_APP_KEY_YANG_SAMA_DI_WORKER';
+
+const WARNA_AVATAR = ['#16a34a','#2563eb','#7c3aed','#db2777','#d97706'];
+function warnaUntuk(id){ let h=0; for(const c of String(id)) h+=c.charCodeAt(0); return WARNA_AVATAR[h % WARNA_AVATAR.length]; }
+
+// Cache hasil fetch supaya tidak panggil API berulang tiap ganti tab
+let KITAB_LIST = [], SURAH_LIST = [], GURU_LIST = [];
+let SANTRI_CACHE = {}; // kelompok -> array santri dari API
+
+async function apiGet(path){
+  const res = await fetch(WORKER_URL + path);
+  const data = await res.json();
+  if(!data.ok) throw new Error(data.error || 'Gagal ambil data');
+  return data;
+}
+
+let state = JSON.parse(localStorage.getItem('tpqAppDemo') || 'null') || {
+  kelompok: 'BANIN',
+  santriAktifId: null
+};
+function simpanState(){ localStorage.setItem('tpqAppDemo', JSON.stringify(state)); }
+
+async function muatMasterData(){
+  try {
+    const [k, s, g] = await Promise.all([apiGet('/kitab'), apiGet('/master-surat'), apiGet('/pengajar')]);
+    KITAB_LIST = k.data; SURAH_LIST = s.data; GURU_LIST = g.data;
+  } catch(e) {
+    console.error('Gagal muat master data dari Worker:', e.message);
+    alert('Tidak bisa terhubung ke server (Worker). Pastikan WORKER_URL sudah diisi benar. Detail: ' + e.message);
+  }
+}
+
+// ===== NAVIGASI TAB UTAMA =====
+function gantiTab(tab){
+  ['informasi','kelas','kantor','raport'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('hidden-sec', t!==tab);
+    document.getElementById('nav-'+t).classList.toggle('active', t===tab);
+  });
+  window.scrollTo(0,0);
+}
+
+// ===== ISI DATA STATIS (Informasi) =====
+document.getElementById('progress-jenjang').innerHTML = [
+  ['Faturrahman',80,12,'var(--g)'],['Al-Bayan',65,10,'var(--blue)'],["Al-Qur'an",50,8,'var(--purple)'],['Fashiatul Huruf',75,11,'var(--orange)']
+].map(([n,p,c,warna]) => `
+  <div>
+    <div class="flex justify-between mb-1"><span class="font-semibold">${n}</span><span class="text-[var(--soft)]">${c} santri</span></div>
+    <div class="flex items-center gap-2"><div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full" style="width:${p}%;background:${warna}"></div></div><b>${p}%</b></div>
+  </div>`).join('');
+
+document.getElementById('list-pencapaian').innerHTML = [
+  ['A','#16a34a','Ahmad','Naik ke Al-Bayan','12 Sep 2025'],
+  ['S','#db2777','Siti Nurhaliza','Hafal Surah Al-Fatihah','11 Sep 2025'],
+  ['F','#2563eb','Fikri','Selesai Fashiatul Huruf','10 Sep 2025']
+].map(([i,c,n,d,t]) => `
+  <div class="flex items-center gap-2.5 py-2">
+    <div class="avatar" style="background:${c}">${i}</div>
+    <div class="flex-1 min-w-0"><p class="font-bold text-[11.5px] truncate">${n}</p><p class="text-[10px] text-[var(--soft)] truncate">${d}</p><p class="text-[9px] text-[var(--soft)]">${t}</p></div>
+    <span class="text-[10px] font-bold text-amber-600 flex items-center gap-1 shrink-0"><i class="fa-solid fa-star text-[9px]"></i>+1</span>
+  </div>`).join('');
+
+document.getElementById('list-jadwal').innerHTML = [
+  ['16.00 – 17.00','Banin','Faturrahman','#16a34a'],
+  ['17.00 – 18.00','Banat','Al-Bayan','#db2777'],
+  ['18.30 – 19.30','Private',"Al-Qur'an",'#d97706']
+].map(([j,k,ma,c]) => `
+  <div class="flex items-center gap-2.5 py-2">
+    <i class="fa-solid fa-circle text-[7px]" style="color:${c}"></i>
+    <span class="text-[11px] font-semibold w-24 shrink-0">${j}</span>
+    <span class="text-[11px] font-bold flex-1">${k} <span class="font-normal text-[var(--soft)]">(${ma})</span></span>
+    <i class="fa-solid fa-chevron-right text-[10px] text-[var(--soft)]"></i>
+  </div>`).join('');
+
+const aktivitasHTML = [
+  ['#16a34a','Ahmad',"menyelesaikan pembacaan Al-Qur'an",'10:24'],
+  ['#7c3aed','Fikri','naik ke kelas Al-Bayan','09:50'],
+  ['#d97706','Zaid','mencapai target hafalan doa','08:32'],
+  ['#2563eb',null,'Kehadiran sesi hari ini selesai','07:45']
+].map(([c,n,d,t]) => `
+  <div class="flex items-start gap-2.5 text-[11px]">
+    <i class="fa-solid fa-circle text-[7px] mt-1" style="color:${c}"></i>
+    <p class="flex-1">${n?`<b>${n}</b> `:''}${d}</p>
+    <span class="text-[10px] text-[var(--soft)] shrink-0">${t}</span>
+  </div>`).join('');
+document.getElementById('list-aktivitas').innerHTML = aktivitasHTML;
+
+document.getElementById('list-aktivitas-kantor').innerHTML = [
+  ['fa-user','#16a34a','Data santri baru ditambahkan','Ahmad Fauzi • Banin','24 Sep 2025 09:12'],
+  ['fa-book','#2563eb','Kitab baru ditambahkan','Tafsir Jalalain','23 Sep 2025 15:45'],
+  ['fa-user-tie','#7c3aed','Data pengajar diperbarui','Ust. Ahmad','22 Sep 2025 14:30'],
+  ['fa-database','#d97706','Backup data berhasil','Database TPQ Nurul Hidayah','21 Sep 2025 10:20'],
+  ['fa-user-group','#db2777','Data wali ditambahkan','Ibu Siti Nurhaliza','20 Sep 2025 16:05']
+].map(([ic,c,t,s,tgl]) => `
+  <div class="flex items-center gap-2.5 py-2.5">
+    <div class="w-8 h-8 rounded-full flex items-center justify-center text-white text-[11px] shrink-0" style="background:${c}"><i class="fa-solid ${ic}"></i></div>
+    <div class="flex-1 min-w-0"><p class="font-bold text-[11px] truncate">${t}</p><p class="text-[10px] text-[var(--soft)] truncate">${s}</p></div>
+    <span class="text-[9px] text-[var(--soft)] text-right shrink-0">${tgl}</span>
+  </div>`).join('');
+
+document.getElementById('tgl-hari-ini').innerText = new Date().toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'});
+function stubKantor(nama){ alert(`Halaman "${nama}" — CRUD-nya menyusul di tahap berikutnya (belum terhubung D1).`); }
+
+// ===== TAB KELAS (data dari Worker/D1) =====
+async function pilihKelompok(k){
+  state.kelompok = k; simpanState();
+  ['BANIN','BANAT','PRIVAT'].forEach(x => document.getElementById('pill-'+x.toLowerCase()).classList.toggle('active', x===k));
+  await muatSantriKelompok(k);
+  renderKelasList();
+}
+
+async function muatSantriKelompok(k){
+  const container = document.getElementById('list-santri-kelas');
+  container.innerHTML = '<p class="text-center text-[11px] text-[var(--soft)] py-4">Memuat data santri...</p>';
+  try {
+    const res = await apiGet('/santri?kelompok=' + k);
+    SANTRI_CACHE[k] = res.data;
+  } catch(e) {
+    SANTRI_CACHE[k] = [];
+    container.innerHTML = `<p class="text-center text-[11px] text-rose-600 py-4">Gagal memuat: ${e.message}</p>`;
+  }
+}
+
+function renderKelasList(){
+  const list = SANTRI_CACHE[state.kelompok] || [];
+  document.getElementById('daftar-santri-title').innerText = `Daftar Santri (${state.kelompok.charAt(0)+state.kelompok.slice(1).toLowerCase()})`;
+  const belum = list.filter(s => s.status==='Belum Dipanggil').length;
+  const selesai = list.filter(s => s.status==='Selesai').length;
+  document.getElementById('sesi-total').innerText = list.length;
+  document.getElementById('sesi-belum').innerText = belum;
+  document.getElementById('sesi-selesai').innerText = selesai;
+
+  if(list.length===0){
+    document.getElementById('list-santri-kelas').innerHTML = `<p class="text-center text-[11px] text-[var(--soft)] py-4">Belum ada santri di kelompok ini. Tambahkan lewat tab Kantor.</p>`;
+    return;
+  }
+
+  document.getElementById('list-santri-kelas').innerHTML = list.map(s => {
+    const warnaPill = s.status==='Selesai' ? 'background:var(--g-bg);color:var(--g-dk)' : 'background:var(--amber-bg);color:var(--amber-tx)';
+    return `
+    <button onclick="bukaDetailSantri('${s.id}')" class="card w-full p-3 flex items-center gap-2.5 text-left">
+      <div class="avatar" style="background:${warnaUntuk(s.id)}">${s.nama.split(' ').map(w=>w[0]).slice(0,2).join('')}</div>
+      <div class="flex-1 min-w-0"><p class="font-bold text-[12.5px] truncate">${s.nama}</p><p class="text-[10.5px] text-[var(--soft)]">${s.jenjang} • Hal. ${s.hal}</p></div>
+      <span class="statuspill" style="${warnaPill}">${s.status}</span>
+      <i class="fa-solid fa-chevron-right text-[11px] text-[var(--soft)]"></i>
+    </button>`;
+  }).join('');
+}
+function mulaiKelas(){ const list = SANTRI_CACHE[state.kelompok] || []; if(list.length) bukaDetailSantri(list[0].id); }
+
+function bukaDetailSantri(id){
+  state.santriAktifId = id; simpanState();
+
+  document.getElementById('kelas-list-view').classList.add('hidden-sec');
+  document.getElementById('kelas-detail-view').classList.remove('hidden-sec');
+
+  const list = SANTRI_CACHE[state.kelompok] || [];
+  const s = list.find(x=>String(x.id)===String(id));
+  document.getElementById('detail-subtitle').innerText = `Sesi ${state.kelompok.charAt(0)+state.kelompok.slice(1).toLowerCase()} • ${document.getElementById('tgl-hari-ini').innerText}`;
+  document.getElementById('d-avatar').innerText = s.nama.split(' ').map(w=>w[0]).slice(0,2).join('');
+  document.getElementById('d-avatar').style.background = warnaUntuk(s.id);
+  document.getElementById('d-nama').innerText = s.nama;
+  document.getElementById('d-jenjang-hal').innerText = `${s.jenjang} • Hal. ${s.hal}`;
+  document.getElementById('d-kelompok').innerText = state.kelompok.charAt(0)+state.kelompok.slice(1).toLowerCase();
+  document.getElementById('d-jenjang').innerText = s.jenjang;
+  document.getElementById('d-hal').innerText = 'Hal. '+s.hal;
+
+  document.getElementById('f-tanggal').value = new Date().toISOString().slice(0,10);
+  document.getElementById('f-kitab').innerHTML = '<option value="">Pilih Kitab</option>' + KITAB_LIST.map(k=>`<option value="${k.id}">${k.nama}</option>`).join('');
+  document.getElementById('f-surah').innerHTML = '<option value="">Pilih Surah</option>' + SURAH_LIST.map(x=>`<option value="${x.nama}">${x.nama}</option>`).join('');
+  document.getElementById('f-halaman').innerHTML = '<option value="">Pilih</option>' + Array.from({length:40},(_,n)=>n+1).map(n=>`<option ${String(n)===s.hal?'selected':''}>${n}</option>`).join('');
+  document.getElementById('f-guru').innerHTML = '<option value="">Pilih Guru</option>' + GURU_LIST.map(g=>`<option value="${g.id}">${g.nama}</option>`).join('');
+  document.getElementById('f-baris').value=''; document.getElementById('f-kelancaran').value=''; document.getElementById('f-keterangan').value=''; document.getElementById('f-count').innerText='0/500';
+
+  updateStatCountDetail();
+}
+function updateStatCountDetail(){
+  const list = SANTRI_CACHE[state.kelompok] || [];
+  document.getElementById('d-total').innerText = list.length;
+  document.getElementById('d-belum').innerText = list.filter(s=>s.status==='Belum Dipanggil').length;
+  document.getElementById('d-selesai').innerText = list.filter(s=>s.status==='Selesai').length;
+}
+async function tutupDetailKelas(){
+  document.getElementById('kelas-detail-view').classList.add('hidden-sec');
+  document.getElementById('kelas-list-view').classList.remove('hidden-sec');
+  await muatSantriKelompok(state.kelompok);
+  renderKelasList();
+}
+function hadirMulaiSetoran(){ alert('Kehadiran tercatat: Hadir. Silakan lanjut isi form Pencatatan Pembelajaran di bawah.'); }
+
+document.getElementById('f-keterangan').addEventListener('input', e => { document.getElementById('f-count').innerText = e.target.value.length + '/500'; });
+
+function draftAI(){
+  const kelancaran = document.getElementById('f-kelancaran').value || 'Lancar';
+  const kitabNama = document.getElementById('f-kitab').selectedOptions[0]?.textContent || '';
+  const surah = document.getElementById('f-surah').value;
+  const materi = surah || kitabNama;
+  document.getElementById('f-keterangan').value = `Bacaan ${kelancaran.toLowerCase()}. Materi: ${materi}. Perlu diperhatikan kembali di pertemuan berikutnya.`;
+  document.getElementById('f-count').innerText = document.getElementById('f-keterangan').value.length + '/500';
+}
+function resetForm(){ bukaDetailSantri(state.santriAktifId); }
+
+async function simpanPembelajaran(){
+  const btn = event.target.closest('button');
+  const teksAsli = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menyimpan...';
+
+  try {
+    const res = await fetch(WORKER_URL + '/riwayat-pembelajaran', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        appKey: APP_KEY,
+        santriId: state.santriAktifId,
+        tanggal: document.getElementById('f-tanggal').value,
+        kitabId: document.getElementById('f-kitab').value || null,
+        surah: document.getElementById('f-surah').value || null,
+        halaman: document.getElementById('f-halaman').value || null,
+        barisHalaman: document.getElementById('f-baris').value || null,
+        kelancaran: document.getElementById('f-kelancaran').value || null,
+        pengajarId: document.getElementById('f-guru').value || null,
+        keterangan: document.getElementById('f-keterangan').value || null
+      })
+    });
+    const data = await res.json();
+    if(!data.ok) throw new Error(data.error || 'Gagal menyimpan');
+
+    alert('Pencatatan pembelajaran tersimpan ke database!');
+    await tutupDetailKelas();
+  } catch(e) {
+    alert('Gagal menyimpan: ' + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = teksAsli;
+  }
+}
+
+async function muatRingkasanInformasi(){
+  try {
+    const r = await apiGet('/ringkasan');
+    document.getElementById('info-total-santri').innerText = r.totalSantri;
+    document.getElementById('info-per-kelompok').innerText = r.perKelompok.map(k => `${k.nama} ${k.n}`).join(' | ');
+  } catch(e) {
+    document.getElementById('info-total-santri').innerText = '–';
+    document.getElementById('info-per-kelompok').innerText = 'Gagal memuat dari server';
+  }
+}
+
+// ===== INIT =====
+(async function init(){
+  await muatMasterData();
+  await muatRingkasanInformasi();
+  await pilihKelompok(state.kelompok);
+  gantiTab('informasi');
+})();
+</script>
 </body>
 </html>
